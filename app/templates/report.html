@@ -4,102 +4,118 @@
 <div class="container" style="max-width: 1200px;">
 
     <div class="card mb-4">
-        <div style="display:flex; justify-content:space-between; align-items:start;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
             <div>
-                <h1 style="font-size:2rem; margin-bottom:5px;">
-                    <i class="fa-solid fa-file-contract" style="color:var(--primary);"></i>
-                    Audit Report
-                </h1>
-                <h3 style="margin:0; color:#475569;">{{ metadata.title or video_id }}</h3>
-                <p style="margin:5px 0;">
-                    Channel: <strong>{{ metadata.channel_title or 'Unknown' }}</strong> •
-                    Views: {{ "{:,}".format(metadata.view_count or 0) }}
-                </p>
-            </div>
-            <div style="text-align:right;">
-                <div style="font-size:3rem; font-weight:bold; color:{{ 'green' if report.overall_score > 80 else 'orange' }}">
-                    {{ report.overall_score or 'N/A' }}
-                </div>
-                <span style="font-size:0.9rem; color:#888;">COMPLIANCE SCORE</span>
-            </div>
-        </div>
-    </div>
-
-    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px;">
-
-        <div style="display:flex; flex-direction:column; gap:20px;">
-
-            <div class="card">
-                <h2><i class="fa-solid fa-film"></i> Visual Inspection</h2>
-                <p>Sampled frames (1 per 3s). Hover to inspect.</p>
-                <div class="frame-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; max-height: 400px; overflow-y: auto;">
-                    {% for frame_url in frames %}
-                        <a href="{{ frame_url }}" target="_blank">
-                            <img src="{{ frame_url }}" style="width:100%; border-radius:4px; border:1px solid #eee;" loading="lazy">
-                        </a>
-                    {% else %}
-                        <p>No frames extracted yet.</p>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <div class="card">
-                <h2><i class="fa-solid fa-align-left"></i> Transcript & Context</h2>
-                <div style="max-height:300px; overflow-y:auto; background:#f8fafc; padding:15px; border-radius:8px; font-family:monospace; font-size:0.9rem;">
-                    {% for segment in transcript %}
-                        <p><strong>{{ "%.1f"|format(segment.start) }}s:</strong> {{ segment.text }}</p>
-                    {% else %}
-                        <p>No transcription available.</p>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-
-        <div style="display:flex; flex-direction:column; gap:20px;">
-
-            <div class="card">
-                <h2><i class="fa-solid fa-headphones"></i> Audio Stems</h2>
-
-                <div style="margin-bottom:15px;">
-                    <label style="font-weight:bold; display:block; margin-bottom:5px;">Vocals (Isolated)</label>
-                    <audio controls src="{{ vocals_url }}" style="width:100%;"></audio>
-                </div>
-
-                <div style="margin-bottom:15px;">
-                    <label style="font-weight:bold; display:block; margin-bottom:5px;">Instrumental (Music)</label>
-                    <audio controls src="{{ instr_url }}" style="width:100%;"></audio>
-                </div>
-
-                <div style="background:#f0fdf4; padding:10px; border-radius:8px; border:1px solid #bbf7d0; font-size:0.9rem;">
-                    <strong><i class="fa-brands fa-spotify"></i> Music ID:</strong><br>
-                    {{ report.music_detected or "No copyrighted music detected." }}
-                </div>
-            </div>
-
-            <div class="card">
-                <h2><i class="fa-solid fa-clipboard-check"></i> Policy Check</h2>
-                <ul style="list-style:none; padding:0;">
-                    {% for check in report.policy_checks %}
-                    <li style="margin-bottom:10px; padding:10px; border-radius:6px; background: {{ '#fee2e2' if check.violation else '#dcfce7' }}; border:1px solid {{ '#fecaca' if check.violation else '#bbf7d0' }};">
-                        <div style="display:flex; justify-content:space-between;">
-                            <strong>{{ check.policy_name }}</strong>
-                            <span>
-                                {% if check.violation %}
-                                    <i class="fa-solid fa-circle-xmark" style="color:#dc2626;"></i> FAIL
-                                {% else %}
-                                    <i class="fa-solid fa-circle-check" style="color:#16a34a;"></i> PASS
-                                {% endif %}
-                            </span>
-                        </div>
-                        <div style="font-size:0.85rem; margin-top:4px;">{{ check.reason }}</div>
+                <h2 class="text-xl font-bold mb-2">📺 Channel Details</h2>
+                <ul class="text-sm text-gray-600">
+                    <li><strong>Name:</strong> {{ data.meta.get('channel', {}).get('name', 'N/A') }}</li>
+                    <li><strong>Subscribers:</strong> {{ "{:,}".format(data.meta.get('channel', {}).get('subscribers', 0)) }}</li>
+                    <li><strong>Created:</strong> {{ data.meta.get('channel', {}).get('created_at', '')[:10] }}</li>
+                    <li><strong>Total Videos:</strong> {{ data.meta.get('channel', {}).get('total_videos', 0) }}</li>
+                    <li><strong>Upload Freq:</strong>
+                        {{ data.meta.get('channel', {}).get('upload_freq', {}).get('per_week', 0) }} / week
                     </li>
-                    {% else %}
-                        <p>No policy analysis generated yet.</p>
-                    {% endfor %}
                 </ul>
             </div>
-
+            <div>
+                <h2 class="text-xl font-bold mb-2">🎥 Video Details</h2>
+                <ul class="text-sm text-gray-600">
+                    <li><strong>Title:</strong> {{ data.meta.get('video', {}).get('title', 'N/A') }}</li>
+                    <li><strong>Published:</strong> {{ data.meta.get('video', {}).get('created_at', '')[:10] }}</li>
+                    <li><strong>Views:</strong> {{ "{:,}".format(data.meta.get('video', {}).get('views', 0)) }}</li>
+                    <li><strong>Duration:</strong> {{ data.meta.get('video', {}).get('duration', 'N/A') }}</li>
+                </ul>
+            </div>
         </div>
     </div>
+
+    <div class="card mb-4">
+        <h2 class="text-xl font-bold mb-4">🔊 Audio Analysis</h2>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+            <div class="p-4 bg-gray-50 rounded">
+                <h3 class="font-bold border-bottom pb-2">Instrumental / Music</h3>
+                <audio controls src="{{ media.instr }}" style="width:100%; margin:10px 0;"></audio>
+
+                <div class="text-sm">
+                    <p><strong>Music Detected?</strong> {{ "Yes" if data.music.get('music_present') else "No" }}</p>
+                    {% for track in data.music.get('tracks', []) %}
+                        <div class="bg-white p-2 mt-2 border rounded">
+                            <strong>{{ track.title }}</strong> by {{ track.artist }}<br>
+                            <span class="text-xs text-gray-500">Timestamp: {{ track.start_time }} - {{ track.end_time }}</span>
+                        </div>
+                    {% endfor %}
+                    <p class="mt-2"><strong>AI Music?</strong> {{ "Yes" if data.music.get('is_ai_generated') else "No" }}</p>
+                </div>
+            </div>
+
+            <div class="p-4 bg-gray-50 rounded">
+                <h3 class="font-bold border-bottom pb-2">Vocals / Speech</h3>
+                <audio controls src="{{ media.vocal }}" style="width:100%; margin:10px 0;"></audio>
+
+                <div class="text-sm">
+                    <p><strong>AI Voice?</strong>
+                        <span class="{{ 'text-red-600 font-bold' if data.ai_audio.get('is_ai_voice') else 'text-green-600' }}">
+                            {{ "YES" if data.ai_audio.get('is_ai_voice') else "NO" }}
+                        </span>
+                        (Confidence: {{ data.ai_audio.get('confidence', 0) }})
+                    </p>
+                    <div class="mt-2 h-32 overflow-y-auto bg-white p-2 border rounded">
+                        <strong>Transcription:</strong><br>
+                        {% for seg in data.transcript[:5] %}
+                            <span class="text-xs text-gray-500">{{ "%.0f"|format(seg.start) }}s:</span> {{ seg.text }}<br>
+                        {% endfor %}
+                        ...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <h2 class="text-xl font-bold mb-4">🖼️ Visual Analysis</h2>
+        <p class="text-sm text-gray-500 mb-2">Sampled frames extracted every 3 seconds.</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto;">
+            {% for frame in frames %}
+                <div style="position:relative;">
+                    <a href="{{ frame }}" target="_blank">
+                        <img src="{{ frame }}" style="width:100%; height:100px; object-fit:cover; border-radius:4px;">
+                    </a>
+                    </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="display:flex; justify-content:space-between;">
+            <h2 class="text-xl font-bold mb-4">📋 Policy Compliance Check</h2>
+            <div class="text-right">
+                <span class="text-2xl font-bold {{ 'text-green-600' if data.report.get('overall_score', 0) > 80 else 'text-red-600' }}">
+                    {{ data.report.get('overall_score', 'N/A') }}
+                </span>
+                <span class="text-xs text-gray-500 block">SCORE</span>
+            </div>
+        </div>
+
+        <ul style="list-style:none; padding:0;">
+            {% for check in data.report.get('policy_checks', []) %}
+            <li class="mb-3 p-3 rounded border {{ 'bg-red-50 border-red-200' if check.violation else 'bg-green-50 border-green-200' }}">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <strong class="{{ 'text-red-800' if check.violation else 'text-green-800' }}">
+                        {{ check.policy_name }}
+                    </strong>
+                    <span class="font-bold {{ 'text-red-600' if check.violation else 'text-green-600' }}">
+                        {{ "FAIL" if check.violation else "PASS" }}
+                    </span>
+                </div>
+                <div class="text-sm text-gray-700">
+                    {{ check.reason or "No issues found." }}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
 </div>
 {% endblock %}

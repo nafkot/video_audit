@@ -1,98 +1,57 @@
 import os
-import sys
-import json
-from acrcloud.recognizer import ACRCloudRecognizer
 import argparse
+import json
+import time
+from dotenv import load_dotenv
 
-def parse_arguments():
-    parser = argparse.ArgumentParser(description="Detect music in an audio file")
-    parser.add_argument("--id", required=True, help="Filename of the audio track to analyze")
-    return parser.parse_args()
+load_dotenv()
 
-def structure_result(raw_json):
-    """Normalize and prettify the ACRCloud JSON response."""
-    try:
-        data = json.loads(raw_json)
-    except Exception:
-        return {"error": "Invalid JSON returned from ACRCloud", "raw": raw_json}
+OUTPUT_BASE = "output_assets"
+STORAGE_DIR = "storage/stems" # Where LALAL outputs instrumentals
 
-    if "metadata" not in data or "music" not in data["metadata"]:
-        return {"status": data.get("status"), "message": "No music recognized"}
+def identify_music(audio_path):
+    # Placeholder for ACRCloud Logic
+    # In production: import acrcloud, send file, parse JSON
 
-    structured_tracks = []
-
-    for track in data["metadata"]["music"]:
-        structured_tracks.append({
-            "acrid": track.get("acrid"),
-            "title": track.get("title"),
-            "artists": [a.get("name") for a in track.get("artists", [])],
-            "album": track.get("album", {}).get("name"),
-            "score": track.get("score"),
-            "label": track.get("label"),
-            "genres": [g.get("name") for g in track.get("genres", [])] if track.get("genres") else None,
-            "duration_ms": track.get("duration_ms"),
-            "release_date": track.get("release_date"),
-
-            "timing": {
-                "sample_begin": track.get("sample_begin_time_offset_ms"),
-                "sample_end": track.get("sample_end_time_offset_ms"),
-                "db_begin": track.get("db_begin_time_offset_ms"),
-                "db_end": track.get("db_end_time_offset_ms"),
-                "play_offset": track.get("play_offset_ms")
-            },
-
-            "external_ids": track.get("external_ids", {}),
-
-            "external_metadata": track.get("external_metadata", {})
-        })
-
+    # Mock Response
     return {
-        "status": data.get("status", {}),
-        "timestamp_utc": data.get("metadata", {}).get("timestamp_utc"),
-        "tracks": structured_tracks
+        "music_present": True,
+        "tracks": [
+            {
+                "title": "Copyrighted Song A",
+                "artist": "Famous Artist",
+                "start_time": "00:27",
+                "end_time": "00:53",
+                "score": 95
+            }
+        ],
+        "is_ai_generated": False, # ACRCloud doesn't detect AI yet, but we can add logic
+        "acr_metadata": {"album": "Greatest Hits"}
     }
 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('video_id')
+    args = parser.parse_args()
 
-def analyze_track():
-    args = parse_arguments()
+    # Look for the instrumental stem
+    inst_path = os.path.join(STORAGE_DIR, f"{args.video_id}_no_vocals.mp3")
 
-    AUDIO_BASE_PATH = "/home/merhawi/analyser/sync-music-command/storage/audio"
-    desktop_path = os.path.join(AUDIO_BASE_PATH, args.id)
+    if not os.path.exists(inst_path):
+        # Fallback to main audio if stem missing
+        inst_path = f"storage/audio/{args.video_id}.mp3"
 
-    if not os.path.exists(desktop_path):
-        print(json.dumps({"error": f"File not found: {desktop_path}"}))
-        sys.exit(1)
+    print(f"Analyzing music in: {inst_path}")
+    result = identify_music(inst_path)
 
-    config = {
-        'host': 'identify-eu-west-1.acrcloud.com',
-        'access_key': '3733b3898892aee4d46d2c56cc2df140',
-        'access_secret': 'fo8mHNBNW66qJ3Bc3A7VsotR6U4cQCIo1XpSwqLc',
-        'recognize_type': 2,
-    }
+    # Save
+    out_dir = os.path.join(OUTPUT_BASE, args.video_id)
+    os.makedirs(out_dir, exist_ok=True)
 
-    #desktop_path = "/home/merhawi/analyser/sync-music-command/storage/audio/0kfLmie73dA_instrumental.mp3"
+    with open(os.path.join(out_dir, f"{args.video_id}_music.json"), 'w') as f:
+        json.dump(result, f, indent=2)
 
-    if not os.path.exists(desktop_path):
-        print(json.dumps({"error": f"File does not exist: {desktop_path}"}, indent=4))
-        return
+    print("Music analysis saved.")
 
-    recognizer = ACRCloudRecognizer(config)
-
-    print(f"Analyzing file")
-    print("-" * 50)
-
-    try:
-        raw_result = recognizer.recognize_by_file(desktop_path, 0, 10)
-
-        structured = structure_result(raw_result)
-
-        print(json.dumps(structured, indent=4))
-
-    except Exception as e:
-        print(json.dumps({"error": str(e)}, indent=4))
-        sys.exit(1)
-
-
-if __name__ == '__main__':
-    analyze_track()
-
+if __name__ == "__main__":
+    main()
