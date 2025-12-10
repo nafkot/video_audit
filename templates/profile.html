@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ channel.title }} - Insight Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <a href="/" class="inline-block mb-6 text-indigo-400 hover:text-white font-bold text-sm">← Back to Dashboard</a>
+
+        <!-- HEADER -->
+        <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 mb-8 flex flex-col md:flex-row gap-8 items-start">
+            <img src="{{ channel.thumbnail_url }}" class="w-32 h-32 rounded-full border-4 border-slate-700 bg-slate-900">
+            <div class="flex-1">
+                <h1 class="text-4xl font-bold text-white mb-2">{{ channel.title }}</h1>
+                <p class="text-slate-400 mb-4 max-w-3xl">{{ channel.description }}</p>
+                <div class="flex gap-6 text-sm font-medium text-slate-300">
+                    <span>{{ "{:,}".format(channel.subscriber_count) }} Subs</span>
+                    <span>{{ channel.video_count }} Videos</span>
+                    <span>{{ "{:,}".format(channel.view_count) }} Views</span>
+                </div>
+            </div>
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 text-center min-w-[120px]">
+                <div class="text-3xl font-bold text-emerald-400">{{ "%.0f"|format(stats.sentiment_avg) }}%</div>
+                <div class="text-xs text-slate-500 uppercase tracking-wider mt-1">Sentiment Score</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- LEFT: COMMERCIAL INTEL -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                    <h3 class="text-xs font-bold text-amber-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Top Sponsors
+                    </h3>
+                    <ul class="space-y-2">
+                        {% for sponsor in stats.sponsors %}
+                        <li class="bg-slate-900 px-3 py-2 rounded text-sm text-slate-300 border border-slate-700/50">{{ sponsor }}</li>
+                        {% else %}
+                        <li class="text-slate-500 text-sm italic">No specific sponsors detected in recent videos.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                    <h3 class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-4">Brand Mentions</h3>
+                    <div class="flex flex-wrap gap-2">
+                        {% for brand in stats.top_brands %}
+                        <span class="px-2 py-1 bg-blue-900/30 text-blue-300 rounded text-xs border border-blue-900/50">{{ brand }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                    <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4">Content Topics</h3>
+                    <div class="flex flex-wrap gap-2">
+                        {% for topic in stats.top_topics %}
+                        <span class="px-2 py-1 bg-slate-900 text-slate-400 rounded text-xs border border-slate-700 hover:border-slate-600 cursor-default">#{{ topic }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: VIDEO FEED -->
+            <div class="lg:col-span-2 space-y-4">
+                <h3 class="text-lg font-bold text-white mb-2">Latest Analysis</h3>
+                {% for video in videos %}
+                <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 hover:border-indigo-500/50 transition-colors group">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">{{ video.title }}</div>
+                        <span class="text-[10px] px-2 py-0.5 rounded border border-slate-600 bg-slate-900 text-slate-400">{{ video.overall_sentiment }}</span>
+                    </div>
+                    <div class="flex gap-3 text-xs text-slate-500 mb-3">
+                        <span>{{ video.upload_date[:10] }}</span>
+                        <span>{{ video.duration }}</span>
+                    </div>
+                    <p class="text-sm text-slate-400 leading-relaxed">{{ video.overall_summary }}</p>
+                    
+                    <!-- Detected Commercials -->
+                    {% set sponsors = video.sponsors | from_json %}
+                    {% if sponsors and sponsors[0] %}
+                    <div class="mt-3 pt-3 border-t border-slate-700/50 flex items-center gap-2">
+                        <span class="text-[10px] font-bold text-amber-500 uppercase">Sponsored by</span>
+                        <span class="text-xs text-slate-300">{{ sponsors | join(', ') }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

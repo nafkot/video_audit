@@ -1,0 +1,114 @@
+a Nike logo
+an Adidas logo
+a Puma logo
+a Reebok logo
+an Under Armour logo
+a New Balance logo
+a Fila logo
+a Vans logo
+a Converse logo
+an ASICS logo
+a Lululemon logo
+
+a Louis Vuitton logo
+a Gucci logo
+a Chanel logo
+a Prada logo
+a Hermes logo
+a Dior logo
+a Burberry logo
+a Rolex logo
+a Cartier logo
+a Tiffany & Co. logo
+a Ralph Lauren logo
+a Tommy Hilfiger logo
+a Calvin Klein logo
+
+a Zara logo
+an H&M logo
+a Uniqlo logo
+a Gap logo
+a Forever 21 logo
+
+an Apple logo
+a Microsoft logo
+a Google logo
+an Amazon logo
+a Meta logo (Facebook)
+an IBM logo
+an Intel logo
+a Samsung logo
+a Sony logo
+an HP logo
+a Dell logo
+an LG logo
+a Panasonic logo
+a Nintendo logo
+a PlayStation logo
+an Xbox logo
+a NVIDIA logo
+an AMD logo
+a Tesla logo
+
+a Ford logo
+a Toyota logo
+a Honda logo
+a Chevrolet logo
+a BMW logo
+a Mercedes-Benz logo
+a Volkswagen logo
+a Audi logo
+a Porsche logo
+a Ferrari logo
+a Lamborghini logo
+a Hyundai logo
+a Kia logo
+
+a Coca-Cola logo
+a Pepsi logo
+a McDonald's logo
+a Starbucks logo
+a KFC logo
+a Burger King logo
+a Subway logo
+a Nestlé logo
+a Kraft Heinz logo
+a Unilever logo
+a Mars logo
+a Red Bull logo
+a Monster Energy logo
+a Heineken logo
+a Budweiser logo
+
+a Walmart logo
+a Target logo
+an eBay logo
+an Alibaba logo
+an IKEA logo
+a Costco logo
+a Home Depot logo
+
+a Disney logo
+a Netflix logo
+a Spotify logo
+a YouTube logo
+a TikTok logo
+an Instagram logo
+a Twitter logo (X logo)
+a Warner Bros. logo
+a Paramount logo
+a Universal Studios logo
+an EA logo (Electronic Arts)
+an Activision logo
+
+a Visa logo
+a Mastercard logo
+an American Express logo
+a PayPal logo
+a FedEx logo
+a UPS logo
+a DHL logo
+
+This acts as the "none of the above" / fallback option.
+
+an image with no prominent brand

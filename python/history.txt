@@ -1,0 +1,500 @@
+   28  mysql test -u root
+   29  mysql test -u root
+   30  brew services start mysql
+   31  mysql test -u root
+   32  pwd
+   33  mysql test < ~/youtube_contentid_assets.sql -u root
+   34  df -h
+   35  sudo rm -rf ~/.Trash/*
+   36  df -h
+   37  tmutil listlocalsnapshots /
+   38  sudo tmutil thinlocalsnapshots / 10000000000 4
+   39  df -h
+   40  tmutil listlocalsnapshots /
+   41  sudo shutdown -r now
+   42  df -h
+   43  sudo rm -rf ~/.Trash/*
+   44  df -h
+   45  tmutil listlocalsnapshots /
+   46  sudo tmutil thinlocalsnapshots / 10000000000 4
+   47  df -h
+   48  tmutil listlocalsnapshots /
+   49  sudo shutdown -r now
+   50  df -h
+   51  sudo du -h -d 1 /System/Volumes/Data | sort -hr | head -n 20
+   52  sudo du -h -d 1 /Users/nafkot | sort -hr | head -n 20
+   53  ssh 64.226.99.112 -lroot
+   54  ssh 64.226.99.112 -lroot
+   55  ssh 64.226.99.112 -lroot
+   56  ssh 64.226.99.112 -lroot
+   57  reset
+   58  ssh 64.226.99.112 -lroot
+   59  ssh-keygen -t ed25519
+   60  ssh 64.226.99.112 -lroot
+   61  ssh-copy-id nafkot@64.226.99.112
+   62  mysql test -u root
+   63  mysql test -u root
+   64  brew services restart mysql
+   65  mysql test -u root
+   66  mysql test -u root
+   67  mysql test -u root
+   68  mysql test -u root
+   69  cd Downloads/
+   70  scp May2025YouTubeReport.zip root@10.114.0.2:
+   71  scp May2025YouTubeReport.zip root@64.226.99.112:
+   72  scp bybrx:freemusicwave_tracks_combined.csv .
+   73  scp vybrx:freemusicwave_tracks_combined.csv .
+   74  scp vybrx:June2025YouTubeReport/freemusicwave_tracks_combined.csv .
+   75  ssh vybrx
+   76  mysql test -uroot
+   77  mysql test -uroot
+   78  mysqldump -u root -p --no-data test > test_schema.sql
+   79  mysqldump -u root --no-data test > test_schema.sql
+   80  mysql test -uroot
+   81  ls
+   82  ./import_csv.sh 
+   83  mysql test -uroot
+   84  mysql --versio
+   85  mysql --version
+   86  DELIMITER $$
+   87  CREATE PROCEDURE `drop_index_if_exists`(IN tableName VARCHAR(64), IN indexName VARCHAR(64))
+   88  BEGIN
+   89      IF((SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = tableName AND index_name = indexName) > 0) THEN
+   90          SET @s = CONCAT('DROP INDEX ', indexName, ' ON ', tableName);
+   91          PREPARE stmt FROM @s;
+   92          EXECUTE stmt;
+   93          DEALLOCATE PREPARE stmt;
+   94      END IF;
+   95  END$$
+   96  DELIMITER ;
+   97  CALL drop_index_if_exists('asset_raw', 'idx_asset_id');
+   98  CREATE INDEX idx_asset_id ON asset_raw (asset_id(100));
+   99  CALL drop_index_if_exists('adj_asset_raw', 'idx_asset_id');
+  100  CREATE INDEX idx_asset_id ON adj_asset_raw (asset_id(100));
+  101  CALL drop_index_if_exists('red_label_rawdata_asset', 'idx_asset_id');
+  102  CREATE INDEX idx_asset_id ON red_label_rawdata_asset (asset_id(100));
+  103  CALL drop_index_if_exists('adjustment_red_label_rawdata_asset', 'idx_asset_id');
+  104  CREATE INDEX idx_asset_id ON adjustment_red_label_rawdata_asset (asset_id(100));
+  105  CALL drop_index_if_exists('video_raw', 'idx_video_id');
+  106  CREATE INDEX idx_video_id ON video_raw (video_id(100));
+  107  CALL drop_index_if_exists('red_label_rawdata_video', 'idx_video_id');
+  108  CREATE INDEX idx_video_id ON red_label_rawdata_video (video_id(100));
+  109  DROP PROCEDURE `drop_index_if_exists`;
+  110  mysql test -uroot
+  111  ./import_csv.sh 
+  112  mysql test -uroot
+  113  ./import_csv.sh 
+  114  mysqldump test > test.sql -uroot
+  115  mysqldump test > test.sql -uroot
+  116  ls test.sql
+  117  ls -alt
+  118  mysqldump test > test.sql -uroot
+  119  mysqldump test -uroot
+  120  mysqldump test > test.sql -uroot
+  121  mysqldump -uroot test > test.sql
+  122  cd ~
+  123  mysqldump -uroot test > test.sql
+  124  gzip test.sql 
+  125  scp test.sql.gz vybrx:
+  126  mysqldump test -uroot
+  127  mysql -uroo
+  128  mysql -uroot
+  129  brew services restart mysql
+  130  ls -alh /opt/homebrew/var/mysql
+  131  ls -alh /usr/local/var/mysql
+  132  brew services stop mysql
+  133  rm -rf /usr/local/var/mysql
+  134  rm -rf /usr/local/var/
+  135  ls -alh /usr/local/var/
+  136  brew services start mysql
+  137  ls
+  138  gaip youtube_contentid_assets.sql
+  139  gzip youtube_contentid_assets.sql
+  140  scp youtube_contentid_assets.sql.gz vybrx:
+  141  ssh vybrx
+  142  ssh vybrx
+  143  :q
+  144  ssh vybrx
+  145  ssh vybrx
+  146  ssh vybrx
+  147  ssh vybrx
+  148  cd Downloads/
+  149  scp June2025YouTubeReport.zip vybrx:
+  150  ssh vybrx
+  151  ssh vybrx
+  152  ssh vybrx
+  153  ssh vybrx
+  154  cd ../scripts/
+  155  vi yt_login.py
+  156  chmod 755 yt_login.py
+  157  python3 yt_login.py
+  158  pip install playwright
+  159  playwright install
+  160  python3 yt_login.py
+  161  python yt_login.py
+  162  which python3
+  163  /usr/local/bin/python3 -m pip install --upgrade pip setuptools
+  164  pwd
+  165  python3 -m venv venv
+  166  source venv/bin/activate
+  167  ./yt_login.py 
+  168  python3 yt_login.py 
+  169  pip install playwright
+  170  playwright install
+  171  vi yt_login.py 
+  172  python3 yt_login.py 
+  173  scp browser_state.json sv_live:scripts/
+  174  scp browser_state.json sv_live:scripts/
+  175  scp sv_live:scripts/debug_* .
+  176  scp sv_live:scripts/debug_pmv_failed_grQYKWamnZo.png .
+  177  scp sv_live:scripts/youtube_OAC_PMV_checker.py .
+  178  scp sv_live:scripts/debug_pmv_failed_rNGB7CwT0FQ.png .
+  179  scp sv_live:scripts/debug_pmv_failed_71PtrIWrXRY.png .
+  180  ls
+  181  mkdir oac_pmv
+  182  cd oac_pmv/
+  183  vi youtube_OAC_PMV_checker.py
+  184  scp sv_live:/home/wwwsv/webs/api.soundvault.tv/storage/peak-vista-291614-c4af8900019c.json .
+  185  scp sv_live:/home/merhawi/scripts/peak-vista-291614-c4af8900019c.json .
+  186  pwd
+  187  vi youtube_OAC_PMV_checker.py
+  188  cp ../browser_state.json .
+  189  cp ~/Downloads/channel_list.csv .
+  190  scp sv_live:/home/merhawi/scripts/output.csv .
+  191  python3 youtube_OAC_PMV_checker.py channel_list.csv 
+  192  vi requirements.txt
+  193  pip install -r requirements.txt
+  194  playwright install
+  195  playwright install chromium firefox
+  196  playwright install chromium firefox
+  197  python3 youtube_OAC_PMV_checker.py channel_list.csv 
+  198  pip install cryptography
+  199  python3 youtube_OAC_PMV_checker.py channel_list.csv 
+  200  vi youtube_OAC_PMV_checker.py 
+  201  scp sv_live:/home/merhawi/scripts/channel_list.csv .
+  202  vi youtube_OAC_PMV_checker.py
+  203  ssh sv_live
+  204  ssh sv_live
+  205  ssh sv_live
+  206  ssh sv_live
+  207  scp vybrx:label_exports.tar.gz .
+  208  scp vybrx:June2025YouTubeReport/label_exports.tar.gz .
+  209  scp vybrx:label_exports.tar.gz .
+  210  scp vybrx:June2025YouTubeReport/label_exports.tar.gz .
+  211  ssh sv_dev
+  212  cd Downloads/
+  213  scp Kebron_batch_3.zip ssh_live:
+  214  scp Kebron_batch_3.zip sv_live:
+  215  scp  sv_live:scripts/output.csv .
+  216  cd Downloads/
+  217  scp Kebron_batch_3.zip ssh_live:
+  218  scp Kebron_batch_3.zip sv_live:
+  219  scp  sv_live:scripts/output.csv .
+  220  scp sv_live:scripts/debug_oac_failed_UC97FvhfYjikC6Yrbq1dBriQ.png .
+  221  scp sv_live:/home/merhawi/scripts/debug_oac_failed_UC97FvhfYjikC6Yrbq1dBriQ.png .
+  222  scp sv_live:/home/merhawi/scripts/debug_oac_failed_UC97FvhfYjikC6Yrbq1dBriQ.png .
+  223  scp sv_live:/home/merhawi/scripts/debug_oa* .
+  224  scp sv_live:/home/merhawi/scripts/debug_* .
+  225  scp sv_live:/home/merhawi/scripts/debug_* .
+  226  scp sv_live:/home/merhawi/scripts/debug_* .
+  227  scp sv_live:/home/merhawi/scripts/debug_* .
+  228  scp sv_live:/home/merhawi/scripts/debug_* .
+  229  vi PMV.txt
+  230  vi NON-PMV.txt
+  231  scp Downloads/channel_list.csv sv_live:scripts/
+  232  ssh vybrx
+  233  ssh sv_live
+  234  scp sv_live:scripts/output.csv .
+  235  ssh sv_live
+  236  ssh sv_live
+  237  ssh sv_live
+  238  vi ~/.ssh/config
+  239  ssh vybrx
+  240  ssh vybrx
+  241  ssh vybrx
+  242  bv      vff
+  243  vi youtube_OAC_PMV_checker.py
+  244  vi channel_list.csv 
+  245  cp channel_list.csv channel_list.csv.orig
+  246  vi channel_list.csv
+  247  cp output_v3.csv output_v3.csv.orig
+  248  python3 youtube_OAC_PMV_checker.py channel_list.csv 
+  249  ssh vybrx
+  250  python3 -m venv venv
+  251  source venv/bin/activate
+  252  python3 youtube_OAC_PMV_checker.py channel_list.csv 
+  253  ssh vybrx
+  254  vi output_v3.csv.orig 
+  255  python3 youtube_OAC_PMV_checker.py channel_list.csv 
+  256  ls
+  257  vi output_v3.csv.orig 
+  258  pwd
+  259  ls
+  260  cd ../
+  261  ls
+  262  python3 yt_login.py
+  263  exit
+  264  python3 -m venv venv
+  265  source venv/bin/activate
+  266  vi channel_list.csv
+  267  pwd
+  268  cd oac_pmv/
+  269  vi channel_list.csv
+  270  ls
+  271  vi youtube_OAC_PMV_checker.py 
+  272  vi youtube_OAC_PMV_checker.py 
+  273  cd ../
+  274  python3 yt_login.py 
+  275  cp browser_state.json oac_pmv/
+  276  cd oac_pmv/
+  277  python3 youtube_OAC_PMV_checker.py channel_list.csv 
+  278  vi channel_list.csv
+  279  python3 youtube_OAC_PMV_checker.py channel_list.csv 
+  280  vi youtube_OAC_PMV_checker.py 
+  281  cp youtube_OAC_PMV_checker.py.working.29.07.25 youtube_OAC_PMV_checker.py
+  282  python3 youtube_OAC_PMV_checker.py channel_list.csv 
+  283  vi output.csv 
+  284  vi transform_data.py
+  285  mkdir ../top_50_channels;mv ../transform_data.py top_50_channels; cs ../top_50_channels
+  286   mkdir ../top_50_channels
+  287  mv transform_data.py ../top_50_channels; cd ../top_50_channels
+  288  ls
+  289  vi transform_data.py 
+  290  mv * ../
+  291  cd ../
+  292  python3 transform_data.py 
+  293  pip install pandas
+  294  python3 transform_data.py 
+  295  mysql syncbaby
+  296  python3 transform_data.py 
+  297  python3 transform_data.py 
+  298  vi transform_data.py 
+  299  python3 transform_data.py 
+  300  vi transform_data.py 
+  301  python3 transform_data.py 
+  302  vi transform_data.py 
+  303  python3 transform_data.py 
+  304  vi channel_list.csv
+  305  cd oac_pmv/
+  306  vi channel_list.csv
+  307  ls
+  308  ls -alt | more
+  309  vi output.csv
+  310  vi GASH-Kebrone_Yemane.csv 
+  311  grep ISRC *.csv
+  312  vi channel_list.csv
+  313  ls *.py
+  314  ls ../*.py
+  315  vi ../youtube_OAC_PMV_checker.py 
+  316  grep ISRC *.py
+  317  grep ISRC *.py
+  318  grep ISRC *
+  319  vi GASH-Kebrone_Yemane.csv 
+  320  ls *.csv
+  321  ls ../*.csv
+  322  grep output_with_isrc *.py
+  323  grep output_with_isrc ../*.py
+  324  grep output_with_isrc -R ../*.py
+  325  grep output_with_isrc -R *
+  326  ls
+  327  rm *.png
+  328  ls
+  329  cd ../
+  330  ls *.py
+  331  vi transform_data.py 
+  332  python3 transform_data.py 
+  333  vi transform_data.py 
+  334  python3 transform_data.py 
+  335  vi transform_data.py 
+  336  python3 transform_data.py 
+  337  vi transform_data.py 
+  338  python3 transform_data.py 
+  339  vi transform_data.py 
+  340  python3 transform_data.py 
+  341  vi asset_revenue_all.csv
+  342  vi asset_revenue_all.csv
+  343  ssh sv_live
+  344  ssh sv_live
+  345  ssh sv_live
+  346  ssh sv_live
+  347  ssh sv_live
+  348  curl -k https://syncvault.synology.me
+  349  ping https://syncvault.synology.me
+  350  ping 45.150.145.10
+  351  curl -k https://syncvault.synology.me:5006
+  352  cd Downloads/
+  353  vi asset_20250729_095951.csv 
+  354  vi asset_20250729_102617.csv 
+  355  scp sv_live:scripts/debug_* .
+  356  scp sv_live:scripts/debug_* .
+  357  ssh vybrx
+  358  ssh sv_live
+  359  ssh sv_live
+  360  ssh sv_live
+  361  ssh sv_live
+  362  ssh sv_live
+  363  ssh sv_live
+  364  scp ~/Downloads/Kebron_batch_4.zip sv_live:
+  365  ssh sv_live
+  366  ssh sv_live
+  367  ssh sv_live
+  368  ssh sv_live
+  369  ssh vybrx
+  370  ssh vybrx
+  371  ssh vybrx
+  372  cd ~/Desktop/
+  373  cd ~/Downloads/
+  374  scp syncvault_localhost-2025_08_13_20_02_32-dump.sql vybrx
+  375  scp syncvault_localhost-2025_08_13_20_02_32-dump.sql vybrx:
+  376  scp syncvault_localhost-2025_08_13_20_02_32-dump.sql.gz vybrx:
+  377  ssh vybrx
+  378  ssh sv_live
+  379  cd ~
+  380  scp vybrx:June2025YouTubeReport/label_artist_exports.tar.gz .
+  381  cd Downloads/
+  382  scp July2025YouTubeReport.zip vybrx:
+  383  scp vybrx:asset_ownership_data.gz .
+  384  scp vybrx:asset_ownership_data.csv.gz .
+  385  ssh vybrx
+  386  ssh sv_live
+  387  ssh sv_live
+  388  ssh sv_live
+  389  cd Downloads/
+  390  scp channel_list_2.csv sv_live:scripts
+  391  scp channel_list_2.csv sv_live:scripts
+  392  ssh sv_live
+  393  cd scripts/
+  394  ls
+  395  python3 yt_login.py
+  396  history > history.txt 
+  397  vi history.txt 
+  398   python3 -m venv venv
+  399  vi history.txt 
+  400  source venv/bin/activate
+  401  python3 yt_login.py
+  402  scp vybrx:scripts/browser_state.json
+  403  scp browser_state.json vybrx:scripts
+  404  pwd
+  405  scp ../Downloads/FMW_the_rest.csv vybrx:
+  406  ssh vybrx
+  407  scp vybrx:browser_state.json
+  408  scp browser_state.json vybrx:
+  409  ssh vybrx
+  410  scp browser_state.json sv_live:scripts
+  411  scp ../Downloads/FMW_the_rest.csv sv_live:scripts/
+  412  scp ../Downloads/FMW_the_rest_stripped.csv sv_live:scripts/
+  413  ssh sv_live
+  414   python3 -m venv venv
+  415  source venv/bin/activate
+  416  python3 yt_login.py
+  417  scp browser_state.json sv_live:scripts
+  418  pwd
+  419  ssh vybrx
+  420  ssh vybrx
+  421  ssh vybrx
+  422  ssh vybrx
+  423  ssh vybrx
+  424  ssh vybrx
+  425  ssh vybrx
+  426  ssh sv_live
+  427  ssh vybrx
+  428  ssh sv_live
+  429  ssh sv_live
+  430  cd ../h
+  431  cd ../third_party_claims/
+  432  ls
+  433  vi ../history.txt 
+  434  cd ../
+  435  python3 -m venv venv
+  436  vi history.txt 
+  437  source venv/bin/activate
+  438  cd third_party_claims/
+  439  ls
+  440  ls claimspart1
+  441  vi youtube_claims.csv
+  442  mv youtube_claims.csv youtube_claims.py
+  443  vi youtube_claims.py 
+  444  python3 youtube_claims.py 
+  445  vi youtube_claims.csv 
+  446  scp youtube_claims.csv vybrx:
+  447  head -n2 youtube_claims.csv 
+  448  ssh vyberx
+  449  ssh vybrx
+  450  ls
+  451  cd ../
+  452  ls
+  453  cd art_track_missing_invalid/
+  454  reset
+  455  scp Pillar_1_SR_Assets_without_AT_Assets.csv vybrx:
+  456  ssh sv_live
+  457  pwd
+  458  cd scripts/
+  459  ls
+  460  cd art_track_missing_invalid/
+  461  ls -alt *.py
+  462  vi art_track_finder_full.py
+  463  scp assets_report/asset_lifetime_asset_v1_3_20250930.csv vybrx:
+  464  scp assets_report/asset_lifetime_asset_v1_3_20250930.csv.zip vybrx:
+  465  ls
+  466  cd videos_report/
+  467  head -n1 *.csv
+  468  pwd
+  469  cd ../../
+  470  scp vybrx:/var/lib/mysql-files/asset_audit.csv .
+  471  ssh vybrx
+  472  ssh vybrx
+  473  ssh vybrx
+  474  perl -0777 -pe '
+  475  s/def\s+mysql_aggregate_vote\s*\(\s*cur,\s*db,\s*schema,\s*q_hashes,\s*song_id,\s*bucket_w,\s*delta_tol_frames[^)]*\)\s*:/def mysql_aggregate_vote(cur, db, schema, q_hashes, song_id, bucket_w, delta_tol_frames, qhash_table=None, keep_qhash=False, do_explain=False):/s
+  476  ' -i match_video_gpt.py
+  477  ssh vybrx
+  478  ssh vybrx
+  479  ssh sv_live
+  480  sudo touch /var/db/.AppleSetupDone
+  481  sudo reboot
+  482  sudo touch /var/db/.AppleSetupDone
+  483  sudo chmod 644 /var/db/.AppleSetupDone
+  484  sudo pkill "Setup Assistant"
+  485  sudo pkill "migrationassistant"
+  486  sdsetup status
+  487  fdsetup status
+  488  fdesetup status
+  489  sudo diskutil resetUserPermission / `id -u`
+  490  sudo diskutil resetUserPermissions / `id -u`
+  491  sudo diskutil repairPermissions /
+  492  sudo diskutil repairPermissions /
+  493  sudo pkill "Setup Assistant"
+  494  sudo pkill "migrationassistant"
+  495  sudo rm -rf /Library/Preferences/com.apple.SetupAssistant.plist
+  496  sudo rm -rf ~/Library/Preferences/com.apple.SetupAssistant.plist
+  497  sudo rm -rf /var/db/.AppleSetupDone
+  498  sudo touch /var/db/.AppleSetupDone
+  499  sudo chmod 644 /var/db/.AppleSetupDone
+  500  sudo reboot
+  501  ssh sv_live
+  502  wget "https://rr3---sn-o097znzr.googlevideo.com/videoplayback?expire=1762802195&ei=s-URaaLnFp-o8uMP3K-yqQU&ip=156.230.242.58&id=o-AEUjiSJ9wAl4nhYLM-QuKqyEnMfvSCrKp5jWfrzTCooL&itag=302&aitags=133%2C134%2C135%2C136%2C160%2C242%2C243%2C244%2C247%2C278%2C298%2C299%2C302%2C303%2C308%2C315%2C394%2C395%2C396%2C397%2C398%2C399%2C400%2C401&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&met=1762780595%2C&mh=ru&mm=31%2C29&mn=sn-o097znzr%2Csn-n4v7sney&ms=au%2Crdu&mv=m&mvi=3&pl=20&rms=au%2Cau&initcwndbps=4360000&bui=AdEuB5TDthrritP9G9ngzZgL7uW48nb-jgTW7BX5hOW1YIDKAFh4tCceTf7sZEuXRzTwkjtwcpjkc6MT&spc=6b0G_Hc3H1ipDQH40nUo5eZvu44U-D474dmMg5qsQssW3q-YjJB7ev8tMtTuSwRIZZU&vprv=1&svpuc=1&mime=video%2Fwebm&ns=iYuG0ismrdulaEvFJ0EVDcEQ&rqh=1&gir=yes&clen=20288936&dur=277.549&lmt=1761053174840400&mt=1762780182&fvip=4&keepalive=yes&fexp=51552689%2C51565116%2C51565682%2C51580968&c=WEB_EMBEDDED_PLAYER&sefc=1&txp=4437534&n=bovRMeLUKebYeA&sparams=expire%2Cei%2Cip%2Cid%2Caitags%2Csource%2Crequiressl%2Cxpc%2Cbui%2Cspc%2Cvprv%2Csvpuc%2Cmime%2Cns%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRgIhALy3Nm6y6dooL2ectU6-zesoFdw-8RE8maF7WS5Xp37sAiEA_vvkhJPeD-9jUl70ptElh8BdkT5GKCfLw_TxBitFrAU%3D&lsparams=met%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Crms%2Cinitcwndbps&lsig=APaTxxMwRAIgWwrAdX0SnviznZenRFln9y_h05r16hb8Re-st20rxtgCIDJjWRFxyGxj9xNN5pLNidoDV7s8-hH_aCKJkyTNs2F9"
+  503  wget "https://rr3---sn-o097znzr.googlevideo.com/videoplayback?expire=1762802195&ei=s-URaaLnFp-o8uMP3K-yqQU&ip=156.230.242.58&id=o-AEUjiSJ9wAl4nhYLM-QuKqyEnMfvSCrKp5jWfrzTCooL&itag=134&aitags=133%2C134%2C135%2C136%2C160%2C242%2C243%2C244%2C247%2C278%2C298%2C299%2C302%2C303%2C308%2C315%2C394%2C395%2C396%2C397%2C398%2C399%2C400%2C401&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&met=1762780595%2C&mh=ru&mm=31%2C29&mn=sn-o097znzr%2Csn-n4v7sney&ms=au%2Crdu&mv=m&mvi=3&pl=20&rms=au%2Cau&initcwndbps=4360000&bui=AdEuB5TDthrritP9G9ngzZgL7uW48nb-jgTW7BX5hOW1YIDKAFh4tCceTf7sZEuXRzTwkjtwcpjkc6MT&spc=6b0G_Hc3H1ipDQH40nUo5eZvu44U-D474dmMg5qsQssW3q-YjJB7ev8tMtTuSwRIZZU&vprv=1&svpuc=1&mime=video%2Fmp4&ns=iYuG0ismrdulaEvFJ0EVDcEQ&rqh=1&gir=yes&clen=2928537&dur=277.533&lmt=1761052057831195&mt=1762780182&fvip=4&keepalive=yes&fexp=51552689%2C51565116%2C51565682%2C51580968&c=WEB_EMBEDDED_PLAYER&sefc=1&txp=4432534&n=bovRMeLUKebYeA&sparams=expire%2Cei%2Cip%2Cid%2Caitags%2Csource%2Crequiressl%2Cxpc%2Cbui%2Cspc%2Cvprv%2Csvpuc%2Cmime%2Cns%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRAIgJs50RmKGIwCysnG6EP14GfwXqtOSl7m3GKaPcmX-nGMCIDrdXkDvX-I4tunWwYRP5UZEfJSvuSAQeRJzW8LjfViw&lsparams=met%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Crms%2Cinitcwndbps&lsig=APaTxxMwRAIgWwrAdX0SnviznZenRFln9y_h05r16hb8Re-st20rxtgCIDJjWRFxyGxj9xNN5pLNidoDV7s8-hH_aCKJkyTNs2F9"
+  504  ssh sv_test
+  505  ssh sv_live
+  506  ssh sv_live
+  507  scp sv_live:downloaded.mp4 .
+  508  cd Downloads/
+  509  vi video_audio_analysis.json
+  510  pwd
+  511  cd ../
+  512   dc Desktop/
+  513  cd Desktop/
+  514  mkdir analyser
+  515  cd analyser/
+  516  ls
+  517  pwd
+  518  ls
+  519  git clone https://jobssoundvault@bitbucket.org/soundvault/sync-music-command.git
+  520  ls
+  521  cd sync-music-command/
+  522  ls
+  523  cd python/
+  524  ls
+  525  vi .env
+  526  pip install -r requirements.txt
+  527  history > history.txt

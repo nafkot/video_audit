@@ -1,0 +1,31 @@
+# API & Server
+fastapi
+uvicorn
+python-multipart
+
+# Core AI & Hugging Face
+transformers
+sentence-transformers
+accelerate
+safetensors
+einops
+timm
+
+# Audio & OCR
+openai-whisper
+paddleocr>=2.7.0
+pydub
+
+# Image Processing
+# Using 'headless' is better for servers (no GUI dependencies)
+opencv-python-headless
+pillow
+
+# Data & Utilities
+numpy
+pandas
+requests
+python-dotenv
+tqdm
+scipy
+regex
