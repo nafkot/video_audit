@@ -1,0 +1,26 @@
+:root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; --success: #22c55e; }
+body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
+.container { max-width: 900px; margin: 0 auto; padding: 20px; }
+
+/* Card */
+.audit-card, .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
+.card-header h1 { margin: 0 0 10px 0; font-size: 24px; }
+.card-header p { color: #64748b; margin-bottom: 25px; }
+
+/* Input */
+.input-group { display: flex; gap: 10px; margin-bottom: 30px; }
+input { flex: 1; padding: 14px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px; }
+button { padding: 14px 28px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+button:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+/* Progress Steps */
+.progress-steps { display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; }
+.step-item { display: flex; flex-direction: column; align-items: center; font-size: 12px; color: #94a3b8; width: 100%; text-align: center; }
+.step-icon { font-size: 18px; margin-bottom: 5px; }
+.step-item.active { color: var(--primary); font-weight: bold; }
+.step-item.completed { color: var(--success); }
+
+/* Console */
+.console-window { background: #0f172a; border-radius: 12px; overflow: hidden; }
+.console-header { background: #1e293b; color: #94a3b8; padding: 8px 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+.console-body { color: #4ade80; padding: 20px; font-family: 'Consolas', monospace; font-size: 13px; height: 250px; overflow-y: auto; white-space: pre-wrap; }

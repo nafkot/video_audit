@@ -1,0 +1,110 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="audit-card">
+        <div class="card-header">
+            <h1>Start New Audit</h1>
+            <p>Enter a YouTube Video ID to begin the comprehensive compliance check.</p>
+        </div>
+        
+        <div class="input-group">
+            <input type="text" id="videoId" placeholder="e.g. 0kfLmie73dA" value="0kfLmie73dA">
+            <button id="startBtn" onclick="startAudit()">
+                <i class="fa-solid fa-play"></i> Run Audit
+            </button>
+        </div>
+
+        <div id="status-area" style="display: none;">
+            <div class="progress-steps" id="steps-container">
+                </div>
+            
+            <div class="console-window">
+                <div class="console-header">Real-time Logs</div>
+                <div id="console-output" class="console-body"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const steps = [
+    "Metadata", "Download", "Frame Split", "Audio Extract", 
+    "LALAL.ai Split", "Music ID", "Visual Analysis", "Report Gen"
+];
+
+function startAudit() {
+    const vid = document.getElementById('videoId').value.trim();
+    if (!vid) return alert("Please enter a Video ID");
+
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('status-area').style.display = 'block';
+    
+    // Render Steps
+    const stepsContainer = document.getElementById('steps-container');
+    stepsContainer.innerHTML = steps.map((s, i) => 
+        `<div id="step-${i}" class="step-item">
+            <div class="step-icon"><i class="fa-regular fa-circle"></i></div>
+            <div class="step-label">${s}</div>
+        </div>`
+    ).join('');
+
+    const consoleDiv = document.getElementById('console-output');
+    consoleDiv.innerHTML = '> Initializing pipeline...\n';
+
+    const evtSource = new EventSource('/audit/stream/' + vid);
+    
+    evtSource.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+
+        // Update Steps
+        if (data.step_index !== undefined) {
+            updateStep(data.step_index);
+        }
+
+        // Update Logs
+        if (data.message) {
+            consoleDiv.innerHTML += `> ${data.message}\n`;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        // Completion
+        if (data.status === 'COMPLETE') {
+            evtSource.close();
+            document.getElementById('startBtn').disabled = false;
+            updateStep(steps.length - 1, true); // Mark last as done
+            
+            // Redirect to report
+            setTimeout(() => {
+                window.location.href = `/report/${vid}`;
+            }, 1000);
+        }
+    };
+    
+    evtSource.onerror = function() {
+        evtSource.close();
+        document.getElementById('startBtn').disabled = false;
+        consoleDiv.innerHTML += '\n> ❌ Connection Error.';
+    };
+}
+
+function updateStep(index, isFinish=false) {
+    const current = document.getElementById(`step-${index}`);
+    if (current) {
+        current.classList.add('active');
+        current.querySelector('i').className = "fa-solid fa-spinner fa-spin";
+    }
+    
+    // Mark previous as done
+    if (index > 0 || isFinish) {
+        const prevIndex = isFinish ? index : index - 1;
+        const prev = document.getElementById(`step-${prevIndex}`);
+        if (prev) {
+            prev.classList.remove('active');
+            prev.classList.add('completed');
+            prev.querySelector('i').className = "fa-solid fa-check";
+        }
+    }
+}
+</script>
+{% endblock %}

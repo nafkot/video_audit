@@ -1,0 +1,105 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container" style="max-width: 1200px;">
+
+    <div class="card mb-4">
+        <div style="display:flex; justify-content:space-between; align-items:start;">
+            <div>
+                <h1 style="font-size:2rem; margin-bottom:5px;">
+                    <i class="fa-solid fa-file-contract" style="color:var(--primary);"></i>
+                    Audit Report
+                </h1>
+                <h3 style="margin:0; color:#475569;">{{ metadata.title or video_id }}</h3>
+                <p style="margin:5px 0;">
+                    Channel: <strong>{{ metadata.channel_title or 'Unknown' }}</strong> •
+                    Views: {{ "{:,}".format(metadata.view_count or 0) }}
+                </p>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:3rem; font-weight:bold; color:{{ 'green' if report.overall_score > 80 else 'orange' }}">
+                    {{ report.overall_score or 'N/A' }}
+                </div>
+                <span style="font-size:0.9rem; color:#888;">COMPLIANCE SCORE</span>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px;">
+
+        <div style="display:flex; flex-direction:column; gap:20px;">
+
+            <div class="card">
+                <h2><i class="fa-solid fa-film"></i> Visual Inspection</h2>
+                <p>Sampled frames (1 per 3s). Hover to inspect.</p>
+                <div class="frame-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; max-height: 400px; overflow-y: auto;">
+                    {% for frame_url in frames %}
+                        <a href="{{ frame_url }}" target="_blank">
+                            <img src="{{ frame_url }}" style="width:100%; border-radius:4px; border:1px solid #eee;" loading="lazy">
+                        </a>
+                    {% else %}
+                        <p>No frames extracted yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><i class="fa-solid fa-align-left"></i> Transcript & Context</h2>
+                <div style="max-height:300px; overflow-y:auto; background:#f8fafc; padding:15px; border-radius:8px; font-family:monospace; font-size:0.9rem;">
+                    {% for segment in transcript %}
+                        <p><strong>{{ "%.1f"|format(segment.start) }}s:</strong> {{ segment.text }}</p>
+                    {% else %}
+                        <p>No transcription available.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:20px;">
+
+            <div class="card">
+                <h2><i class="fa-solid fa-headphones"></i> Audio Stems</h2>
+
+                <div style="margin-bottom:15px;">
+                    <label style="font-weight:bold; display:block; margin-bottom:5px;">Vocals (Isolated)</label>
+                    <audio controls src="{{ vocals_url }}" style="width:100%;"></audio>
+                </div>
+
+                <div style="margin-bottom:15px;">
+                    <label style="font-weight:bold; display:block; margin-bottom:5px;">Instrumental (Music)</label>
+                    <audio controls src="{{ instr_url }}" style="width:100%;"></audio>
+                </div>
+
+                <div style="background:#f0fdf4; padding:10px; border-radius:8px; border:1px solid #bbf7d0; font-size:0.9rem;">
+                    <strong><i class="fa-brands fa-spotify"></i> Music ID:</strong><br>
+                    {{ report.music_detected or "No copyrighted music detected." }}
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><i class="fa-solid fa-clipboard-check"></i> Policy Check</h2>
+                <ul style="list-style:none; padding:0;">
+                    {% for check in report.policy_checks %}
+                    <li style="margin-bottom:10px; padding:10px; border-radius:6px; background: {{ '#fee2e2' if check.violation else '#dcfce7' }}; border:1px solid {{ '#fecaca' if check.violation else '#bbf7d0' }};">
+                        <div style="display:flex; justify-content:space-between;">
+                            <strong>{{ check.policy_name }}</strong>
+                            <span>
+                                {% if check.violation %}
+                                    <i class="fa-solid fa-circle-xmark" style="color:#dc2626;"></i> FAIL
+                                {% else %}
+                                    <i class="fa-solid fa-circle-check" style="color:#16a34a;"></i> PASS
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div style="font-size:0.85rem; margin-top:4px;">{{ check.reason }}</div>
+                    </li>
+                    {% else %}
+                        <p>No policy analysis generated yet.</p>
+                    {% endfor %}
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
