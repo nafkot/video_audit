@@ -60,13 +60,18 @@
                         </span>
                         (Confidence: {{ data.ai_audio.get('confidence', 0) }})
                     </p>
-                    <div class="mt-2 h-32 overflow-y-auto bg-white p-2 border rounded">
-                        <strong>Transcription:</strong><br>
-                        {% for seg in data.transcript[:5] %}
-                            <span class="text-xs text-gray-500">{{ "%.0f"|format(seg.start) }}s:</span> {{ seg.text }}<br>
-                        {% endfor %}
-                        ...
-                    </div>
+		    <div class="mt-2 h-32 overflow-y-auto bg-white p-2 border rounded">
+			    <strong>Transcription:</strong><br>
+
+			    {% if data.transcript and data.transcript is sequence %}
+				{% for seg in data.transcript[:5] %}
+				    <span class="text-xs text-gray-500">{{ "%.0f"|format(seg.get('start', 0)) }}s:</span> {{ seg.get('text', '') }}<br>
+				{% endfor %}
+				...
+			    {% else %}
+				<span class="text-xs text-gray-500">No transcription available.</span>
+			    {% endif %}
+			</div>
                 </div>
             </div>
         </div>
