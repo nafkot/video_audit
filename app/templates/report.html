@@ -103,23 +103,37 @@
             </div>
         </div>
 
-        <ul style="list-style:none; padding:0;">
-            {% for check in data.report.get('policy_checks', []) %}
-            <li class="mb-3 p-3 rounded border {{ 'bg-red-50 border-red-200' if check.violation else 'bg-green-50 border-green-200' }}">
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <strong class="{{ 'text-red-800' if check.violation else 'text-green-800' }}">
-                        {{ check.policy_name }}
-                    </strong>
-                    <span class="font-bold {{ 'text-red-600' if check.violation else 'text-green-600' }}">
-                        {{ "FAIL" if check.violation else "PASS" }}
-                    </span>
-                </div>
-                <div class="text-sm text-gray-700">
-                    {{ check.reason or "No issues found." }}
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
+	<ul style="list-style:none; padding:0;">
+    {% for check in report.get('policy_checks', []) %}
+
+    {% set is_fail = check.get('Breached')|lower == 'yes' %}
+
+    <li style="margin-bottom:10px; padding:15px; border-radius:8px; border-left: 5px solid {{ '#dc2626' if is_fail else '#16a34a' }}; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+            <strong style="font-size:1.1rem; color:#1e293b;">{{ check.get('Policy') }}</strong>
+            <span style="font-weight:bold; color: {{ '#dc2626' if is_fail else '#16a34a' }};">
+                {% if is_fail %}
+                    <i class="fa-solid fa-circle-exclamation"></i> VIOLATION FOUND
+                {% else %}
+                    <i class="fa-solid fa-check-circle"></i> PASS
+                {% endif %}
+            </span>
+        </div>
+
+        <p style="margin:5px 0; color:#64748b; font-size:0.9rem;">
+            {{ check.get('Description') }}
+        </p>
+
+        {% if is_fail %}
+        <div style="margin-top:10px; padding:10px; background:#fef2f2; color:#b91c1c; border-radius:4px; font-size:0.9rem;">
+            <strong><i class="fa-solid fa-triangle-exclamation"></i> Violation Details:</strong><br>
+            {{ check.get('Violation') }}
+        </div>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
     </div>
 
 </div>

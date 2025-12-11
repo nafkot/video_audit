@@ -80,6 +80,39 @@ def process_frame(file_path: str):
     desc = get_llm_description(b64, "Describe this scene concisely.")
     return desc, b64
 
+
+def run_concurrent_policy_audit(audit_func: callable, audit_source: Any, policies: List[Dict]) -> List[Dict]:
+    """
+    Orchestrates the policy audit by running individual policy checks in parallel.
+    """
+    if not policies: return []
+
+    print(f"\n[+] Starting concurrent LLM audit of {len(policies)} policies...", flush=True)
+    results = []
+
+    # Use 1 worker to avoid rate limits
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future_to_policy = {
+            executor.submit(audit_func, audit_source, policy): policy
+            for policy in policies
+        }
+
+        for i, future in enumerate(concurrent.futures.as_completed(future_to_policy)):
+            policy = future_to_policy[future]
+            try:
+                result = future.result()
+                results.append(result)
+
+                # Real-time logging
+                status = "FAIL" if result.get('Breached') == 'yes' else "PASS"
+                print(f"[POLICY {i+1}/{len(policies)}] {policy.get('Policy')}: {status}", flush=True)
+
+            except Exception as exc:
+                print(f"[ERROR] Policy {policy.get('Policy')} failed: {exc}", flush=True)
+                results.append({"Policy": policy['Policy'], "Breached": "error", "Violation": str(exc)})
+
+    return results
+
 def audit_single_policy_with_llm(image_b64: str, policy_data: Dict) -> Dict:
     if openai_client is None: return {"Policy": policy_data['Policy'], "Breached": "error", "Violation": "No API"}
 

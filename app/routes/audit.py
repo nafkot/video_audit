@@ -117,19 +117,27 @@ def stream_audit(video_id):
             subprocess.run(f"ffmpeg -i {vid_path} -q:a 0 -map a {aud_path} -y", shell=True)
             yield f"data: {json.dumps({'message': 'Audio extracted.'})}\n\n"
 
-            # 5. Transcription (ADDED THIS STEP)
-            yield f"data: {json.dumps({'step': 4, 'message': 'Transcribing Audio...'})}\n\n"
-            # Ensure transcribe_video.py exists (I provided it in the previous turn)
-            for log in run_script(f"python3 python/transcribe_video.py --id='{video_id}'", video_id):
-                yield f"data: {json.dumps({'message': log})}\n\n"
-
-            # 6. LALAL.AI
-            yield f"data: {json.dumps({'step': 5, 'message': 'Separating Vocals (LALAL)...'})}\n\n"
-            stems = AudioService.split_stems(aud_path, video_id)
-            if stems.get("error"):
-                 yield f"data: {json.dumps({'message': '[Error] ' + stems['error']})}\n\n"
+            # 5. LALAL.AI (Blocking)
+            yield f"data: {json.dumps({'step': 4, 'message': 'Isolating Vocals (LALAL.ai)...'})}\n\n"
+            
+            # Use specific paths
+            inst_path = os.path.join("storage", "stems", f"{video_id}_no_vocals.mp3")
+            
+            # Call AudioService
+            # Important: This function must DOWNLOAD the file to 'inst_path' before returning
+            lalal_result = AudioService.split_stems(aud_path, video_id) 
+            
+            if lalal_result.get("error"):
+                 yield f"data: {json.dumps({'message': '[Warning] LALAL failed, using full audio for music check.'})}\n\n"
             else:
-                 yield f"data: {json.dumps({'message': 'Stems separated.'})}\n\n"
+                 yield f"data: {json.dumps({'message': 'Stems downloaded successfully.'})}\n\n"
+
+            # 6. Music ID (Use Instrumental if available)
+            yield f"data: {json.dumps({'step': 5, 'message': 'Checking Music (ACRCloud)...'})}\n\n"
+            
+            # The detect_music.py script now checks 'storage/stems/' first because of Step 5
+            for log in run_script(f"python3 python/detect_music.py {video_id}", video_id):
+                yield f"data: {json.dumps({'message': log})}\n\n"            
 
             # 7. Music ID
             yield f"data: {json.dumps({'step': 6, 'message': 'Identifying Music...'})}\n\n"
