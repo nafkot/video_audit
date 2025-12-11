@@ -37,9 +37,6 @@ SIMPLE_BRAND_LIST = [
     "google", "amazon", "sony", "samsung", "coca-cola", "pepsi"
 ]
 
-# --- CONFIGURATION ---
-# ... (keep existing config) ...
-
 # MAPPING: Keyword -> Canonical Brand Name
 # If BLIP says the keyword (left), we log the Brand (right).
 BRAND_MAPPING = {
@@ -166,5 +163,6 @@ def main(frames_dir: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("video_id", type=str)
     parser.add_argument("--frames_dir", type=str, required=True)
     main(parser.parse_args().frames_dir)
