@@ -11,22 +11,19 @@ from PIL import Image
 from typing import List, Dict, Tuple, Any
 from openai import OpenAI, RateLimitError
 from dotenv import load_dotenv
-from pathlib import Path
 
 load_dotenv()
 
 # --- CONFIGURATION ---
 API_TIMEOUT = 30
-BASE_FRAMES_DIR = "storage/frames"  # Fixed path
+BASE_FRAMES_DIR = "storage/videos/frames"
 MULTIMODAL_MODEL = "gpt-4o-mini"
 SUMMARY_MODEL = "gpt-4o-mini"
 POLICY_FILE = "python/policies.json"
 POLICY_MAX_WORKERS = 1
 MAX_WORKERS = 5
-# Define output directory relative to the project root
 OUTPUT_ASSETS_DIR = "output_assets"
 
-# --- LLM CLIENT INITIALIZATION ---
 API_KEY_VALUE = os.getenv("OPENAI_API_KEY")
 try:
     if not API_KEY_VALUE: raise ValueError("OPENAI_API_KEY not found.")
@@ -36,18 +33,16 @@ except Exception as e:
     openai_client = None
 
 def load_policies(filename: str) -> List[Dict]:
-    """Loads policies and ensures default keys exist."""
     try:
         with open(filename, 'r') as f:
             policies = json.load(f)
-            # Initialize required keys to prevent KeyError later
             for p in policies:
                 p.setdefault('Breached', 'check_required')
                 p.setdefault('Violation', 'N/A')
             return policies
     except Exception as e:
         print(f"CRITICAL ERROR loading policies: {e}", file=sys.stderr)
-        sys.exit(1)
+        return []
 
 def encode_image_to_base64(image_path: str) -> str:
     try:
@@ -72,7 +67,8 @@ def get_llm_description(image_b64: str, prompt: str) -> str:
             max_tokens=100
         )
         return response.choices[0].message.content.strip()
-    except Exception: return "[LLM_DESC_FAILED]"
+    except Exception as e: 
+        return f"[LLM_DESC_FAILED: {str(e)}]"
 
 def process_frame(file_path: str):
     b64 = encode_image_to_base64(file_path)
@@ -80,42 +76,9 @@ def process_frame(file_path: str):
     desc = get_llm_description(b64, "Describe this scene concisely.")
     return desc, b64
 
-
-def run_concurrent_policy_audit(audit_func: callable, audit_source: Any, policies: List[Dict]) -> List[Dict]:
-    """
-    Orchestrates the policy audit by running individual policy checks in parallel.
-    """
-    if not policies: return []
-
-    print(f"\n[+] Starting concurrent LLM audit of {len(policies)} policies...", flush=True)
-    results = []
-
-    # Use 1 worker to avoid rate limits
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-        future_to_policy = {
-            executor.submit(audit_func, audit_source, policy): policy
-            for policy in policies
-        }
-
-        for i, future in enumerate(concurrent.futures.as_completed(future_to_policy)):
-            policy = future_to_policy[future]
-            try:
-                result = future.result()
-                results.append(result)
-
-                # Real-time logging
-                status = "FAIL" if result.get('Breached') == 'yes' else "PASS"
-                print(f"[POLICY {i+1}/{len(policies)}] {policy.get('Policy')}: {status}", flush=True)
-
-            except Exception as exc:
-                print(f"[ERROR] Policy {policy.get('Policy')} failed: {exc}", flush=True)
-                results.append({"Policy": policy['Policy'], "Breached": "error", "Violation": str(exc)})
-
-    return results
-
 def audit_single_policy_with_llm(image_b64: str, policy_data: Dict) -> Dict:
     if openai_client is None: return {"Policy": policy_data['Policy'], "Breached": "error", "Violation": "No API"}
-
+    
     for attempt in range(3):
         try:
             system_prompt = "You are a content policy auditor. Check the image against the policy. Return JSON: {\"Policy\": \"...\", \"Breached\": \"yes/no\", \"Violation\": \"reason\"}"
@@ -136,6 +99,27 @@ def audit_single_policy_with_llm(image_b64: str, policy_data: Dict) -> Dict:
             time.sleep(2)
     return {"Policy": policy_data['Policy'], "Breached": "error", "Violation": "LLM Failed"}
 
+def run_concurrent_policy_audit(audit_func, audit_source, policies):
+    """Checks policies one by one and PRINTS progress immediately."""
+    print(f"\n[DEBUG] Starting audit of {len(policies)} policies...", flush=True)
+    results = []
+    
+    # Sequential Loop for Clear Debugging
+    for i, policy in enumerate(policies):
+        p_name = policy.get('Policy', 'Unknown')
+        print(f"[DEBUG] [{i+1}/{len(policies)}] Checking: {p_name}...", end=" ", flush=True)
+        
+        try:
+            res = audit_func(audit_source, policy)
+            status = res.get('Breached', 'error')
+            results.append(res)
+            print(f"-> {status.upper()}", flush=True)
+        except Exception as e:
+            print(f"-> ERROR: {e}", flush=True)
+            results.append({"Policy": p_name, "Breached": "error", "Violation": str(e)})
+            
+    return results
+
 def construct_storyline(descriptions: List[str]) -> Tuple[str, str]:
     if not descriptions: return "No content.", "No content."
     text = " ".join(descriptions)
@@ -150,34 +134,26 @@ def construct_storyline(descriptions: List[str]) -> Tuple[str, str]:
 def audit_narrative(static_ratio: float, first_frame_b64: str, policy_list: List[Dict]) -> Dict:
     # 1. Filter Visual Policies
     visual_policies = [p for p in policy_list if "Audio" not in p.get('Category', '')]
-
-    # 2. Run Audit
-    results = []
-    print(f"Auditing {len(visual_policies)} policies...", flush=True)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-        futures = {executor.submit(audit_single_policy_with_llm, first_frame_b64, p): p for p in visual_policies}
-        for f in concurrent.futures.as_completed(futures):
-            try: results.append(f.result())
-            except: results.append({"Policy": futures[f]['Policy'], "Breached": "error"})
+    
+    # 2. Run Audit (With Debug Logging)
+    results = run_concurrent_policy_audit(audit_single_policy_with_llm, first_frame_b64, visual_policies)
 
     # 3. Merge Results
     final_policies = []
-    # Add Visual Results
     for p in policy_list:
         p_copy = p.copy()
-        # Find result if it exists
         res = next((r for r in results if r.get('Policy') == p['Policy']), None)
         if res:
             p_copy['Breached'] = res.get('Breached', 'error')
             p_copy['Violation'] = res.get('Violation', 'N/A')
         else:
-            # Mark skipped/audio policies as N/A
             p_copy['Breached'] = 'N/A'
             p_copy['Violation'] = 'Skipped (Audio/Text analysis disabled)'
         final_policies.append(p_copy)
 
-    # 4. Calculate Score
-    breaches = sum(1 for p in final_policies if p['Breached'] == 'yes')
+    # 4. Score
+    # Fix: Count "yes" AND "Yes" as breaches
+    breaches = sum(1 for p in final_policies if str(p['Breached']).lower() == 'yes')
     total = len(final_policies)
     score = int(100 - (breaches / total * 100)) if total > 0 else 0
 
@@ -189,36 +165,53 @@ def audit_narrative(static_ratio: float, first_frame_b64: str, policy_list: List
 
 def main(video_id: str):
     print(f"--- Starting Narrative Analysis for {video_id} ---", flush=True)
-
-    # 1. Setup Paths
+    
     frames_dir = os.path.join(BASE_FRAMES_DIR, video_id)
     out_dir = os.path.join(OUTPUT_ASSETS_DIR, video_id)
     os.makedirs(out_dir, exist_ok=True)
-
-    # 2. Load Images
+    
     if not os.path.exists(frames_dir):
-        print(f"Error: Frames dir not found: {frames_dir}", flush=True)
+        print(f"[ERROR] Frames dir not found: {frames_dir}", flush=True)
         return
+        
     files = sorted([os.path.join(frames_dir, f) for f in os.listdir(frames_dir) if f.endswith('.jpg')])
-
     if not files:
-        print("No frames found.", flush=True)
+        print("[ERROR] No frames found.", flush=True)
         return
 
-    # 3. Analyze Frames (Sample first 5 for speed/cost in demo)
-    print("Analyzing frames...", flush=True)
-    # Get first frame for policy check
-    _, first_b64 = process_frame(files[0])
-
-    # 4. Audit
+    # Analyze Frames with Progress
+    print(f"[DEBUG] Found {len(files)} frames. Analyzing samples...", flush=True)
+    descriptions = []
+    first_b64 = None
+    
+    # Sample every 5th frame to save time/cost, or process all if needed
+    sample_files = files[::5] 
+    
+    for i, f_path in enumerate(sample_files):
+        print(f"[DEBUG] Analyzing Frame {i+1}/{len(sample_files)}...", end=" ", flush=True)
+        desc, b64 = process_frame(f_path)
+        
+        if b64 and not first_b64: first_b64 = b64
+        if desc: descriptions.append(desc)
+        print("Done.", flush=True)
+    
+    # Summary
+    print("[DEBUG] Generating Visual Summary...", flush=True)
+    detailed, summary = construct_storyline(descriptions)
+    
+    # Policy Audit
     policies = load_policies(POLICY_FILE)
-    report = audit_narrative(0.0, first_b64, policies)
+    if first_b64:
+        report = audit_narrative(0.0, first_b64, policies)
+        report['visual_summary'] = summary  # <--- SAVE SUMMARY FOR REPORT.HTML
+    else:
+        report = {"overall_score": 0, "error": "No valid frames analyzed"}
 
-    # 5. SAVE REPORT TO FILE (Critical Fix)
+    # Save
     out_path = os.path.join(out_dir, f"{video_id}_narrative_report.json")
     with open(out_path, 'w') as f:
         json.dump(report, f, indent=2)
-
+    
     print(f"✅ Report saved to: {out_path}", flush=True)
 
 if __name__ == "__main__":

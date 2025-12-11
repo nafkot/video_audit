@@ -12,15 +12,13 @@
                     <li><strong>Subscribers:</strong> {{ "{:,}".format(data.meta.get('channel', {}).get('subscribers', 0)) }}</li>
                     <li><strong>Created:</strong> {{ data.meta.get('channel', {}).get('created_at', '')[:10] }}</li>
                     <li><strong>Total Videos:</strong> {{ data.meta.get('channel', {}).get('total_videos', 0) }}</li>
-                    <li><strong>Upload Freq:</strong>
-                        {{ data.meta.get('channel', {}).get('upload_freq', {}).get('per_week', 0) }} / week
-                    </li>
+                    <li><strong>Freq (Weekly):</strong> {{ data.meta.get('channel', {}).get('upload_freq', {}).get('per_week', 0) }} videos</li>
                 </ul>
             </div>
             <div>
                 <h2 class="text-xl font-bold mb-2">🎥 Video Details</h2>
                 <ul class="text-sm text-gray-600">
-                    <li><strong>Title:</strong> {{ data.meta.get('video', {}).get('title', 'N/A') }}</li>
+                    <li><strong>Title:</strong> {{ data.meta.get('video', {}).get('title', video_id) }}</li>
                     <li><strong>Published:</strong> {{ data.meta.get('video', {}).get('created_at', '')[:10] }}</li>
                     <li><strong>Views:</strong> {{ "{:,}".format(data.meta.get('video', {}).get('views', 0)) }}</li>
                     <li><strong>Duration:</strong> {{ data.meta.get('video', {}).get('duration', 'N/A') }}</li>
@@ -34,60 +32,70 @@
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
             <div class="p-4 bg-gray-50 rounded">
-                <h3 class="font-bold border-bottom pb-2">Instrumental / Music</h3>
+                <h3 class="font-bold border-bottom pb-2">Instrumental Stem</h3>
                 <audio controls src="{{ media.instr }}" style="width:100%; margin:10px 0;"></audio>
 
-                <div class="text-sm">
+                <div class="text-sm mt-2">
                     <p><strong>Music Detected?</strong> {{ "Yes" if data.music.get('music_present') else "No" }}</p>
                     {% for track in data.music.get('tracks', []) %}
-                        <div class="bg-white p-2 mt-2 border rounded">
-                            <strong>{{ track.title }}</strong> by {{ track.artist }}<br>
+                        <div class="bg-white p-2 mt-2 border rounded shadow-sm">
+                            <strong>🎵 {{ track.title }}</strong><br>
+                            by {{ track.artist }}<br>
                             <span class="text-xs text-gray-500">Timestamp: {{ track.start_time }} - {{ track.end_time }}</span>
                         </div>
+                    {% else %}
+                        <p class="text-gray-500 italic">No copyright music identified.</p>
                     {% endfor %}
-                    <p class="mt-2"><strong>AI Music?</strong> {{ "Yes" if data.music.get('is_ai_generated') else "No" }}</p>
+                    <p class="mt-3"><strong>Music Audibility:</strong> {{ data.audibility.get('percent', 0) }}%</p>
                 </div>
             </div>
 
             <div class="p-4 bg-gray-50 rounded">
-                <h3 class="font-bold border-bottom pb-2">Vocals / Speech</h3>
+                <h3 class="font-bold border-bottom pb-2">Vocal Stem</h3>
                 <audio controls src="{{ media.vocal }}" style="width:100%; margin:10px 0;"></audio>
 
-                <div class="text-sm">
+                <div class="text-sm mt-2">
                     <p><strong>AI Voice?</strong>
                         <span class="{{ 'text-red-600 font-bold' if data.ai_audio.get('is_ai_voice') else 'text-green-600' }}">
                             {{ "YES" if data.ai_audio.get('is_ai_voice') else "NO" }}
                         </span>
                         (Confidence: {{ data.ai_audio.get('confidence', 0) }})
                     </p>
-		    <div class="mt-2 h-32 overflow-y-auto bg-white p-2 border rounded">
-			    <strong>Transcription:</strong><br>
 
-			    {% if data.transcript and data.transcript is sequence %}
-				{% for seg in data.transcript[:5] %}
-				    <span class="text-xs text-gray-500">{{ "%.0f"|format(seg.get('start', 0)) }}s:</span> {{ seg.get('text', '') }}<br>
-				{% endfor %}
-				...
-			    {% else %}
-				<span class="text-xs text-gray-500">No transcription available.</span>
-			    {% endif %}
-			</div>
+                    <h4 class="font-bold mt-3 mb-1">Transcript Preview:</h4>
+                    <div class="h-32 overflow-y-auto bg-white p-2 border rounded">
+                        {% if data.transcript %}
+                            {% for seg in data.transcript[:15] %}
+                                <p class="mb-1"><span class="text-xs text-gray-400">{{ "%.0f"|format(seg.get('start', 0)) }}s:</span> {{ seg.get('text', '') }}</p>
+                            {% endfor %}
+                            ...
+                        {% else %}
+                            <p class="italic text-gray-500">No transcription available.</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="card mb-4">
-        <h2 class="text-xl font-bold mb-4">🖼️ Visual Analysis</h2>
-        <p class="text-sm text-gray-500 mb-2">Sampled frames extracted every 3 seconds.</p>
+        <h2 class="text-xl font-bold mb-4">🖼️ Visual Intelligence</h2>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto;">
+        <div class="bg-blue-50 p-4 rounded mb-4 border border-blue-100">
+            <h4 class="text-blue-800 font-bold mb-2"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Visual Summary</h4>
+            <p class="text-sm text-gray-800 leading-relaxed">
+                {{ data.report.get('visual_summary', 'Visual analysis summary pending...') }}
+            </p>
+        </div>
+
+        <p class="text-sm text-gray-500 mb-2">Sampled frames (1 per 3s):</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto;">
             {% for frame in frames %}
-                <div style="position:relative;">
-                    <a href="{{ frame }}" target="_blank">
-                        <img src="{{ frame }}" style="width:100%; height:100px; object-fit:cover; border-radius:4px;">
-                    </a>
-                    </div>
+                <a href="{{ frame }}" target="_blank">
+                    <img src="{{ frame }}" style="width:100%; height:80px; object-fit:cover; border-radius:4px; border:1px solid #ddd;" loading="lazy">
+                </a>
+            {% else %}
+                <p style="color:#888;">No frames found.</p>
             {% endfor %}
         </div>
     </div>
@@ -96,44 +104,40 @@
         <div style="display:flex; justify-content:space-between;">
             <h2 class="text-xl font-bold mb-4">📋 Policy Compliance Check</h2>
             <div class="text-right">
-                <span class="text-2xl font-bold {{ 'text-green-600' if data.report.get('overall_score', 0) > 80 else 'text-red-600' }}">
-                    {{ data.report.get('overall_score', 'N/A') }}
+                {% set score = data.report.get('overall_score', 0) %}
+                <span class="text-2xl font-bold {{ 'text-green-600' if score > 80 else 'text-red-600' }}">
+                    {{ score }}
                 </span>
                 <span class="text-xs text-gray-500 block">SCORE</span>
             </div>
         </div>
 
-	<ul style="list-style:none; padding:0;">
-    {% for check in report.get('policy_checks', []) %}
-
-    {% set is_fail = check.get('Breached')|lower == 'yes' %}
-
-    <li style="margin-bottom:10px; padding:15px; border-radius:8px; border-left: 5px solid {{ '#dc2626' if is_fail else '#16a34a' }}; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-
-        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-            <strong style="font-size:1.1rem; color:#1e293b;">{{ check.get('Policy') }}</strong>
-            <span style="font-weight:bold; color: {{ '#dc2626' if is_fail else '#16a34a' }};">
+        <ul style="list-style:none; padding:0;">
+            {% for check in data.report.get('policy_checks', []) %}
+            
+            {% set is_fail = check.get('Breached', 'no')|string|lower == 'yes' %}
+            
+            <li style="margin-bottom:10px; padding:15px; border-radius:8px; border-left: 5px solid {{ '#dc2626' if is_fail else '#16a34a' }}; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <strong style="font-size:1.1rem; color:#1e293b;">{{ check.get('Policy') }}</strong>
+                    <span style="font-weight:bold; color: {{ '#dc2626' if is_fail else '#16a34a' }};">
+                        {{ "VIOLATION" if is_fail else "PASS" }}
+                    </span>
+                </div>
+                <p style="margin:5px 0; color:#64748b; font-size:0.9rem;">
+                    {{ check.get('Description') }}
+                </p>
                 {% if is_fail %}
-                    <i class="fa-solid fa-circle-exclamation"></i> VIOLATION FOUND
-                {% else %}
-                    <i class="fa-solid fa-check-circle"></i> PASS
+                <div style="margin-top:10px; padding:10px; background:#fef2f2; color:#b91c1c; border-radius:4px; font-size:0.9rem;">
+                    <strong><i class="fa-solid fa-triangle-exclamation"></i> Reason:</strong> 
+                    {{ check.get('Violation') }}
+                </div>
                 {% endif %}
-            </span>
-        </div>
-
-        <p style="margin:5px 0; color:#64748b; font-size:0.9rem;">
-            {{ check.get('Description') }}
-        </p>
-
-        {% if is_fail %}
-        <div style="margin-top:10px; padding:10px; background:#fef2f2; color:#b91c1c; border-radius:4px; font-size:0.9rem;">
-            <strong><i class="fa-solid fa-triangle-exclamation"></i> Violation Details:</strong><br>
-            {{ check.get('Violation') }}
-        </div>
-        {% endif %}
-    </li>
-    {% endfor %}
-</ul>
+            </li>
+            {% else %}
+                <p style="text-align:center; color:#999;">No policy data available.</p>
+            {% endfor %}
+        </ul>
     </div>
 
 </div>

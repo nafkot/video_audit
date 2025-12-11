@@ -13,7 +13,7 @@ SERVICE_URL = "http://127.0.0.1:8001"
 CLIP_URL = f"{SERVICE_URL}/analyse_frame"
 DINO_URL = f"{SERVICE_URL}/find_objects"
 DESCRIBE_URL = f"{SERVICE_URL}/describe"
-STORAGE_FRAMES = "storage/frames"
+STORAGE_FRAMES = "storage/videos/frames"
 OUTPUT_BASE = "output_assets"
 
 API_TIMEOUT = 120

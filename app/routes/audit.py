@@ -4,55 +4,69 @@ import time
 import os
 import subprocess
 import concurrent.futures
+import queue
+import threading
 from datetime import datetime
-from app.services.media_service import MediaService
 from app.services.audio_service import AudioService
 
 audit_bp = Blueprint('audit', __name__)
 
-def run_cmd(command):
-    """Executes shell command strictly."""
-    # Using subprocess.run for blocking calls in threads
-    subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+# --- QUEUE-BASED LOGGER ---
+class StreamLogger:
+    def __init__(self, msg_queue, video_id, storage_dir, debug_mode=False):
+        self.queue = msg_queue
+        self.video_id = video_id
+        self.debug = debug_mode
+        self.log_file = os.path.join(storage_dir, 'logs', f"{video_id}.log")
+        os.makedirs(os.path.dirname(self.log_file), exist_ok=True)
 
-def run_script_with_log(command, video_id):
-    """Runs a script and streams output (for linear steps)."""
-    try:
+    def log(self, message, step_idx=None):
+        """Logs to file and puts message in queue for UI."""
+        timestamp = datetime.now().strftime("[%H:%M:%S]")
+        full_msg = f"{timestamp} {message}"
+        
+        try:
+            with open(self.log_file, "a", encoding="utf-8") as f:
+                f.write(full_msg + "\n")
+        except: pass
+            
+        data = {'message': message}
+        if step_idx is not None: data['step_index'] = step_idx
+        self.queue.put(f"data: {json.dumps(data)}\n\n")
+
+    def run_cmd(self, command):
+        """Runs command, streaming output to queue."""
+        self.log(f"EXEC: {command}")
+        
         process = subprocess.Popen(
-            command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+            command, shell=True, 
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, 
+            text=True, bufsize=1, universal_newlines=True
         )
+        
         for line in iter(process.stdout.readline, ''):
             clean = line.strip()
             if clean:
-                save_log(video_id, clean)
-                yield clean
+                try:
+                    with open(self.log_file, "a", encoding="utf-8") as f:
+                        f.write(f"    {clean}\n")
+                except: pass
+
+                if self.debug or "error" in clean.lower():
+                    self.queue.put(f"data: {json.dumps({'message': '  > ' + clean})}\n\n")
+
         process.stdout.close()
         process.wait()
-    except Exception as e:
-        yield f"[ERROR] {e}"
+        
+        if process.returncode != 0:
+            raise Exception(f"Command failed (Exit {process.returncode})")
 
-def save_log(video_id, message):
-    try:
-        # Use absolute path to avoid thread context issues
-        base_dir = os.path.abspath(os.path.dirname(__file__))
-        # Go up two levels to reach root (app/routes -> app -> root)
-        root_dir = os.path.dirname(os.path.dirname(base_dir))
-        log_dir = os.path.join(root_dir, 'storage', 'logs')
-
-        os.makedirs(log_dir, exist_ok=True)
-        with open(os.path.join(log_dir, f"{video_id}.log"), "a", encoding="utf-8") as f:
-            f.write(f"[{datetime.now().strftime('%H:%M:%S')}] {message}\n")
-    except Exception as e:
-        print(f"Log Error: {e}")
-
-# --- FIXED: Full Report View Function ---
+# --- RESTORED REPORT VIEW ---
 @audit_bp.route('/report/<video_id>')
 def view_report(video_id):
-    # Use current_app only in main thread
     base_storage = current_app.config['STORAGE_DIR']
     output_dir = os.path.join(current_app.config['BASE_DIR'], 'output_assets', video_id)
-
-    # Helper to safely load JSON
+    
     def load_json(filename, default_type=dict):
         path = os.path.join(output_dir, f"{video_id}_{filename}")
         if os.path.exists(path):
@@ -60,159 +74,152 @@ def view_report(video_id):
                 with open(path, 'r') as f: return json.load(f)
             except: pass
         return default_type()
-
-    # Load Data
+    
     data = {
         "meta": load_json("details.json", dict),
         "report": load_json("narrative_report.json", dict),
         "transcript": load_json("transcription.json", list),
         "music": load_json("music.json", dict),
-        "ai_audio": load_json("ai_audio.json", dict)
+        "ai_audio": load_json("ai_audio.json", dict),
+        "audibility": load_json("audibility.json", dict)
     }
 
-    # Media Paths
     media = {
-        "vocal": f"/media/storage/audio/{video_id}_vocals.mp3",
-        "instr": f"/media/storage/audio/{video_id}_instrumentals.mp3"
+        "vocal": f"/media/audio/{video_id}_vocals.mp3",
+        "instr": f"/media/audio/{video_id}_instrumentals.mp3"
     }
 
-    # Frames
     frames_dir = os.path.join(base_storage, "frames", video_id)
     frames = []
     if os.path.exists(frames_dir):
         all_frames = sorted([f for f in os.listdir(frames_dir) if f.endswith('.jpg')])
-        frames = [f"/media/storage/frames/{video_id}/{f}" for f in all_frames[::5]]
+        frames = [f"/media/frames/{video_id}/{f}" for f in all_frames[::5]]
 
     return render_template('report.html', video_id=video_id, data=data, media=media, frames=frames)
 
-@audit_bp.route('/audit/logs/<video_id>')
-def download_logs(video_id):
-    log_dir = os.path.join(current_app.config['STORAGE_DIR'], 'logs')
-    return send_file(os.path.join(log_dir, f"{video_id}.log"), mimetype='text/plain')
-
 @audit_bp.route('/audit/stream/<video_id>')
 def stream_audit(video_id):
-    def generate():
-        # Capture config in main thread
-        base_dir = current_app.config['BASE_DIR']
-        lalal_key = current_app.config['LALAL_API_KEY']
-        audio_storage_dir = os.path.join(base_dir, "storage/audio")
+    debug_mode = request.args.get('debug') == 'true'
+    
+    # 1. Capture Config in Main Thread (Context Safe)
+    base_dir = current_app.config['BASE_DIR']
+    storage_dir = current_app.config['STORAGE_DIR']
+    output_dir_base = os.path.join(base_dir, 'output_assets')
+    lalal_key = current_app.config['LALAL_API_KEY']
+    audio_storage_dir = os.path.join(storage_dir, "audio")
+    
+    video_path = os.path.join(storage_dir, "videos", f"{video_id}.mp4")
+    audio_path = os.path.join(storage_dir, "audio", f"{video_id}.mp3")
 
-        video_path = f"{base_dir}/storage/videos/{video_id}.mp4"
-        audio_path = f"{base_dir}/storage/audio/{video_id}.mp3"
+    msg_queue = queue.Queue()
+    
+    # Clear old log
+    try: os.remove(os.path.join(storage_dir, 'logs', f"{video_id}.log"))
+    except: pass
+    
+    logger = StreamLogger(msg_queue, video_id, storage_dir, debug_mode)
 
-        save_log(video_id, "--- INIT PARALLEL AUDIT ---")
-
-        # FIX: Renamed 'step' to 'step_index' to match index.html JavaScript
-        def log(msg, step_idx=None):
-            save_log(video_id, msg)
-            data = {'message': msg}
-            if step_idx is not None: data['step_index'] = step_idx
-            return f"data: {json.dumps(data)}\n\n"
-
-        yield log(f"🚀 Starting Parallel Audit for {video_id}...")
-
-        # --- EXECUTOR FOR PARALLEL TASKS ---
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+    def background_task():
+        try:
+            logger.log(f"🚀 Starting Audit (Debug: {debug_mode})")
 
             # --- TRACK A: METADATA ---
-            # Step Index 0: "Metadata"
-            yield log("Starting Track A: Metadata...", 0)
-            executor.submit(run_cmd, f"python3 python/get_youtube_video_metadata.py --id='{video_id}'")
+            logger.log("Step 1: Fetching Metadata...", 0)
+            logger.run_cmd(f"python3 python/get_youtube_video_metadata.py --id='{video_id}'")
 
-            # --- START TRACK B: DOWNLOAD & AUDIO EXTRACT ---
-            # Step Index 1: "Download"
-            yield log("Starting Track B: Media Download...", 1)
-            try:
-                run_cmd(f"python3 python/get_video_file.py --id='{video_id}'")
-                yield log("Video downloaded.", 1)
+            # --- TRACK B: PREP ---
+            logger.log("Step 2: Downloading Video...", 1)
+            logger.run_cmd(f"python3 python/get_video_file.py --id='{video_id}'")
+            
+            logger.log("Step 3: Extracting Audio...", 2) # Updated Index
+            # Ensure dir exists
+            os.makedirs(os.path.dirname(audio_path), exist_ok=True)
+            logger.run_cmd(f"ffmpeg -i {video_path} -q:a 0 -map a {audio_path} -y")
 
-                # Step Index 3: "Audio Extract" (Skipping 2 "Frame Split" for now)
-                yield log("Extracting Audio...", 3)
-                run_cmd(f"ffmpeg -i {video_path} -q:a 0 -map a {audio_path} -y")
-                yield log("Audio extracted.", 3)
+            # --- PARALLEL TRACKS ---
+            logger.log("🔀 Starting Parallel Processing...", 2)
+            
+            with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+                
+                def run_audio_track():
+                    try:
+                        # 1. LALAL.ai
+                        logger.log("Track B1: LALAL.ai Splitting...", 3) # Updated Index
+                        def lalal_callback(msg):
+                            logger.log(f"  [LALAL] {msg}")
 
-            except Exception as e:
-                yield log(f"[CRITICAL] Media Prep Failed: {e}")
-                return
+                        lalal = AudioService.split_stems(
+                            audio_path, video_id, lalal_key, audio_storage_dir, 
+                            log_callback=lalal_callback
+                        )
+                        
+                        vocals_file = audio_path
+                        if lalal.get("error"):
+                            logger.log(f"LALAL Failed: {lalal['error']}")
+                        else:
+                            vocals_file = lalal['vocals_path']
+                            ratio = AudioService.calculate_audibility(lalal['vocals_path'], lalal['instr_path'])
+                            
+                            # Save Audibility JSON
+                            out_p = os.path.join(output_dir_base, video_id, f"{video_id}_audibility.json")
+                            os.makedirs(os.path.dirname(out_p), exist_ok=True)
+                            with open(out_p, "w") as f:
+                                json.dump({"percent": ratio}, f)
 
-            # --- SPLIT POINT: PARALLEL SUB-TRACKS ---
-            yield log("🔀 Splitting Pipeline: Audio & Visuals...", 3)
+                        # 2. Transcribe
+                        logger.log("Track B1: Transcribing...")
+                        logger.run_cmd(f"python3 python/transcribe_video.py --id='{video_id}' --file='{vocals_file}'")
 
-            def track_b1_audio():
-                try:
-                    # Step Index 4: "LALAL.ai Split"
-                    save_log(video_id, "Track B1: Sending to LALAL.ai...")
-                    lalal = AudioService.split_stems(audio_path, video_id, lalal_key, audio_storage_dir)
+                        # 3. Music & AI
+                        logger.log("Track B1: Checking Music & AI Voice...", 5) # Updated Index
+                        logger.run_cmd(f"python3 python/detect_music.py {video_id}")
+                        logger.run_cmd(f"python3 python/detect_ai_audio.py {video_id}")
+                        
+                        return "Audio Done"
+                    except Exception as e:
+                        logger.log(f"❌ Audio Track Error: {e}")
+                        raise e
 
-                    if lalal.get("error"):
-                        save_log(video_id, f"LALAL Error: {lalal['error']}")
+                def run_visual_track():
+                    try:
+                        logger.log("Track B2: Splitting Frames...", 4) # Updated Index
+                        logger.run_cmd(f"python3 python/split_video_into_frames.py --fps 0.33 --files '{video_id}.mp4'")
+                        
+                        logger.log("Track B2: Analyzing Visuals...", 6) # Updated Index
+                        logger.run_cmd(f"python3 python/analyse_frames.py {video_id}")
+                        return "Visual Done"
+                    except Exception as e:
+                        logger.log(f"❌ Visual Track Error: {e}")
+                        raise e
 
-                    # Transcribe
-                    save_log(video_id, "Track B1: Transcribing...")
-                    run_cmd(f"python3 python/transcribe_video.py --id='{video_id}'")
+                # Submit
+                f1 = executor.submit(run_audio_track)
+                f2 = executor.submit(run_visual_track)
+                
+                # Wait
+                f1.result()
+                f2.result()
+                logger.log("✅ Analysis Tracks Complete.")
 
-                    # Step Index 5: "Music ID"
-                    save_log(video_id, "Track B1: Checking Music...")
-                    run_cmd(f"python3 python/detect_music.py {video_id}")
+            # --- CONVERGENCE ---
+            logger.log("🏁 Generating Final Report...", 7) # Updated Index
+            logger.run_cmd(f"python3 python/narrative_analyser.py {video_id}")
+            
+            logger.log("✅ AUDIT COMPLETE.")
+            msg_queue.put(f"data: {json.dumps({'status': 'COMPLETE'})}\n\n")
 
-                    # AI Voice
-                    save_log(video_id, "Track B1: AI Voice Analysis...")
-                    run_cmd(f"python3 python/detect_ai_audio.py {video_id}")
-
-                    # Audibility
-                    if not lalal.get("error"):
-                        ratio = AudioService.calculate_audibility(lalal['vocals_path'], lalal['instr_path'])
-                        with open(f"output_assets/{video_id}/{video_id}_audibility.json", "w") as f:
-                             json.dump({"percent": ratio}, f)
-
-                    return "Audio Complete"
-                except Exception as e:
-                    save_log(video_id, f"Track B1 Failed: {e}")
-                    raise e
-
-            def track_b2_visual():
-                try:
-                    # Step Index 2: "Frame Split" (We run this in parallel now)
-                    save_log(video_id, "Track B2: Extracting Frames...")
-                    # Note: We send this log *without* UI update first to not confuse order,
-                    # or we can update step 2 now if we want.
-                    run_cmd(f"python3 python/split_video_into_frames.py --fps 0.33 --files '{video_id}.mp4'")
-
-                    # Step Index 6: "Visual Analysis"
-                    save_log(video_id, "Track B2: AI Vision Analysis...")
-                    run_cmd(f"python3 python/analyse_frames.py {video_id}")
-
-                    return "Visual Complete"
-                except Exception as e:
-                    save_log(video_id, f"Track B2 Failed: {e}")
-                    raise e
-
-            # Launch Threads
-            future_audio = executor.submit(track_b1_audio)
-            future_visual = executor.submit(track_b2_visual)
-
-            # Wait loop
-            while not (future_audio.done() and future_visual.done()):
-                time.sleep(1)
-                yield log("... Processing ...")
-
-            # Check Results and mark steps done
-            if future_audio.exception(): yield log(f"❌ Audio Failed: {future_audio.exception()}")
-            else: yield log("✅ Audio Analysis Done.", 5) # Mark Music ID/Audio steps done
-
-            if future_visual.exception(): yield log(f"❌ Visual Failed: {future_visual.exception()}")
-            else: yield log("✅ Visual Analysis Done.", 6) # Mark Visual step done
-
-        # --- STEP 10: CONVERGENCE ---
-        # Step Index 7: "Report Gen"
-        yield log("🏁 Final Convergence: Generating Report...", 7)
-        try:
-            run_cmd(f"python3 python/narrative_analyser.py {video_id}")
-            yield log("✅ Report Generated.")
         except Exception as e:
-            yield log(f"❌ Reporting Failed: {e}")
+            logger.log(f"CRITICAL FAILURE: {e}")
+            msg_queue.put(f"data: {json.dumps({'error': str(e)})}\n\n")
+        
+        msg_queue.put(None)
 
-        yield f"data: {json.dumps({'status': 'COMPLETE'})}\n\n"
+    threading.Thread(target=background_task).start()
 
-    return Response(stream_with_context(generate()), mimetype='text/event-stream')
+    def event_stream():
+        while True:
+            msg = msg_queue.get()
+            if msg is None: break
+            yield msg
+
+    return Response(stream_with_context(event_stream()), mimetype='text/event-stream')

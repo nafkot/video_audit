@@ -8,12 +8,15 @@
             <p>Enter a YouTube Video ID to begin the comprehensive compliance check.</p>
         </div>
         
-        <div class="input-group">
-            <input type="text" id="videoId" placeholder="e.g. 0kfLmie73dA" value="0kfLmie73dA">
-            <button id="startBtn" onclick="startAudit()">
-                <i class="fa-solid fa-play"></i> Run Audit
-            </button>
-        </div>
+	<div class="input-group">
+                <input type="text" id="videoId" placeholder="Enter YouTube Video ID (e.g., 0kfLmie73dA)" value="0kfLmie73dA">
+                <button id="startBtn" onclick="startAudit()">Start Audit</button>
+    	</div>
+
+    	<div style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px; color: #64748b; font-size: 14px;">
+		<input type="checkbox" id="debugMode">
+		<label for="debugMode">Enable Full Debug Logging (Show detailed script outputs)</label>
+	</div>
 
         <div id="status-area" style="display: none;">
             <div class="progress-steps" id="steps-container">
@@ -34,6 +37,18 @@ const steps = [
 ];
 
 function startAudit() {
+
+    const steps = [
+        "Fetching Metadata",      // 0
+        "Downloading Video",      // 1
+        "Extracting Audio",       // 2 (Swapped)
+        "LALAL.ai Separation",    // 3
+        "Splitting Frames",       // 4 (Swapped)
+        "Music Detection (ACR)",  // 5
+        "Visual Analysis",        // 6
+        "Compliance Report"       // 7
+    ];
+
     const vid = document.getElementById('videoId').value.trim();
     if (!vid) return alert("Please enter a Video ID");
 
@@ -52,7 +67,9 @@ function startAudit() {
     const consoleDiv = document.getElementById('console-output');
     consoleDiv.innerHTML = '> Initializing pipeline...\n';
 
-    const evtSource = new EventSource('/audit/stream/' + vid);
+    const debug = document.getElementById('debugMode').checked;
+    const url = '/audit/stream/' + vid + (debug ? '?debug=true' : '');
+    const evtSource = new EventSource(url);
     
     evtSource.onmessage = function(e) {
         const data = JSON.parse(e.data);
