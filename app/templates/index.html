@@ -57,29 +57,27 @@ function startAudit() {
     evtSource.onmessage = function(e) {
         const data = JSON.parse(e.data);
 
-        // Update Steps
+        // Update Steps (Matches 'step_index' from Python)
         if (data.step_index !== undefined) {
             updateStep(data.step_index);
         }
 
-        // Update Logs
         if (data.message) {
             consoleDiv.innerHTML += `> ${data.message}\n`;
             consoleDiv.scrollTop = consoleDiv.scrollHeight;
         }
 
-        // Completion
         if (data.status === 'COMPLETE') {
             evtSource.close();
             document.getElementById('startBtn').disabled = false;
-            updateStep(steps.length - 1, true); // Mark last as done
+            updateStep(steps.length - 1, true);
             
             // Redirect to report
             setTimeout(() => {
                 window.location.href = `/report/${vid}`;
             }, 1000);
         }
-    };
+    };	
     
     evtSource.onerror = function() {
         evtSource.close();
